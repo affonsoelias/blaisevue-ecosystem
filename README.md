@@ -39,8 +39,9 @@ bv lib search
 # 2. Install latest version into current project:
 bv lib install test
 
-# 3. Install a pinned version:
+# 3. Install a pinned version or specify repository (<repo>:<package>[@version]):
 bv lib install test@1.0.0
+bv lib install official:test@1.1.0
 
 # 4. Install into global offline cache:
 bv lib install test --global

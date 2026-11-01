@@ -97,7 +97,23 @@ Authors can contribute complete, runnable BlaiseVue demo projects showcasing the
 
 ---
 
-## 🚀 5. Submitting via Pull Request
+## 🛡️ 5. Naming Guidelines & Core Reserved Names
+
+To protect framework integrity and eliminate typosquatting or namespace hijacking across the ecosystem:
+
+### Reserved Names Policy
+- **Prefix `blaise-`**: Any package name beginning with `blaise-` (case-insensitive) is strictly reserved for official BlaiseVue framework components and ecosystem modules.
+- **Core Module Names**: The following names are reserved and cannot be claimed by third-party packages:
+  `ui`, `themes`, `icons`, `charts`, `reports`, `studio`, `mobile`, `core`, `sdk`, `tools`, `pas2js`, `framework`, `std`, and `runtime`.
+
+### Community Recommendations
+Community authors are encouraged to use descriptive package names, prefixes, or organizational scopes:
+- ✅ **Allowed**: `my-charts`, `ui-custom`, `vasco-ui`, `acme-auth`, `awesome-grid`.
+- ❌ **Rejected**: `ui`, `blaise-ui`, `blaise-awesome` (will be rejected automatically by `bv create --lib` and Pull Request verification).
+
+---
+
+## 🚀 6. Submitting via Pull Request
 
 1. Fork the [`blaisevue-ecosystem`](https://github.com/affonsoelias/blaisevue-ecosystem) repository.
 2. Add your package manifest entry into `ecosystem.json`.

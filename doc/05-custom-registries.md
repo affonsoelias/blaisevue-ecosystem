@@ -88,3 +88,24 @@ Now, search and install commands seamlessly query both public and private packag
 bv lib search acme
 bv lib install acme-ui-auth
 ```
+
+---
+
+## 🔀 5. Multi-Registry Disambiguation (`<repo>:<package>`)
+
+When working with multiple registered package repositories (e.g. `official` and `acme`), BlaiseVue provides deterministic resolution and collision safety:
+
+1. **Default Repository Priority**: If no repository prefix is provided (e.g. `bv lib install my-pkg`), BlaiseVue queries the active default repository first (`"default": true`).
+2. **Duplicate Notification**: If a package with the same name exists across multiple registries, the CLI resolves from the default source and alerts the developer:
+   ```text
+   Notice: Package "test" was also found in repository: acme.
+           Using [official] (by priority). To specify repository, use: bv lib install <repo>:test
+   ```
+3. **Explicit Targeting**: You can explicitly specify the target repository using `<repo>:<package>[@version]`:
+   ```bash
+   bv lib install acme:test@1.1.0
+   bv lib install official:test
+   bv lib update acme:my-pkg
+   bv lib search acme:
+   ```
+4. **Core Reserved Names Shielding**: Private and third-party repositories are prohibited from publishing packages with reserved core names (e.g. `acme:ui` or `acme:blaise-charts`). The CLI will reject installation with a security exception to ensure core framework stability.
