@@ -1,0 +1,14 @@
+{
+  "name": "blaisevue-ecosystem",
+  "description": "Official community ecosystem and library registry for BlaiseVue",
+  "version": "1.0.0",
+  "packages": {
+    "test": {
+      "name": "test",
+      "description": "Test verification package for BlaiseVue ecosystem",
+      "latest": "1.1.0",
+      "versions": ["1.0.0", "1.1.0"],
+      "download": "https://github.com/affonsoelias/blaisevue-ecosystem/releases/download/{tag}/{package}-{version}.zip"
+    }
+  }
+}

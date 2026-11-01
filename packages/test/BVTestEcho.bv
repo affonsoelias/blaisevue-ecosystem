@@ -1,0 +1,28 @@
+<template>
+  <div class="bv-test-echo" style="padding: 12px; border: 2px dashed #41b883; border-radius: 8px; margin: 10px 0;">
+    <h4>🧪 BlaiseVue Ecosystem Test Component</h4>
+    <p>Package: <strong>test</strong> | Version: <strong>1.1.0</strong></p>
+    <p>Message: {{ message }}</p>
+  </div>
+</template>
+
+<script>
+unit BVTestEcho;
+
+interface
+
+uses
+  JS, Web, BlaiseVue;
+
+type
+  TBVTestEcho = class(TBVComponent)
+  private
+    FMessage: string;
+  published
+    property message: string read FMessage write FMessage;
+  end;
+
+implementation
+
+end.
+</script>
