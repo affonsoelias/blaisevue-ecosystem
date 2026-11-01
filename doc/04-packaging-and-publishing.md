@@ -74,9 +74,33 @@ To allow developers worldwide to install your package via `bv lib install my-wid
 
 ---
 
-## 🚀 4. Submitting via Pull Request
+## 📖 4. Providing Documentation & Runnable Examples
+
+To deliver the best developer experience, package authors are encouraged to contribute documentation and runnable examples directly to the `blaisevue-ecosystem` repository alongside their `ecosystem.json` submission:
+
+### 1. In-Package Documentation (Bundled in Release `.zip`)
+Every library scaffolded with `bv create <name> --lib` contains:
+- **`README.md`**: Explains installation, component props, events, and API reference. This file is bundled inside the distributed `.zip` and extracted into the consumer's `lib/<package>/` folder.
+- **`demo/` Sandbox**: Contains a runnable playground (`index.html` and `App.bv`) allowing users or contributors to test components in isolation.
+
+### 2. Ecosystem Repository Documentation (`doc/packages/<name>.md`)
+For extensive component libraries, authors can submit a dedicated markdown documentation page in `doc/packages/<name>.md` within the `blaisevue-ecosystem` repository. This page can include:
+- Interactive code walkthroughs and component showcases.
+- Pascal unit interface documentation (types, classes, methods).
+- Live screenshots, animated GIFs, and architectural diagrams.
+
+### 3. Community Runnable Examples (`examples/<package>/`)
+Authors can contribute complete, runnable BlaiseVue demo projects showcasing their package inside `examples/<package>/`:
+- Each example is a standalone BlaiseVue project configured to consume the package.
+- Developers can clone the repository, navigate to `examples/<package>/`, and immediately run `bv dev` to see the library in action.
+- Links to these examples are placed in the root `README.md` package catalog table.
+
+---
+
+## 🚀 5. Submitting via Pull Request
 
 1. Fork the [`blaisevue-ecosystem`](https://github.com/affonsoelias/blaisevue-ecosystem) repository.
 2. Add your package manifest entry into `ecosystem.json`.
-3. Submit a Pull Request targeting the `main` branch.
-4. Once merged, every BlaiseVue developer will discover and receive your package upon running `bv repo sync`!
+3. (Optional) Add your runnable demo to `examples/<package>/` and documentation to `doc/packages/<package>.md`.
+4. Submit a Pull Request targeting the `main` branch.
+5. Once merged, every BlaiseVue developer will discover and receive your package upon running `bv repo sync`!

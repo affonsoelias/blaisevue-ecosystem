@@ -13,8 +13,14 @@ This repository serves as the official community hub for packages, extensions, h
 | 🚀 [**01. Getting Started & Usage**](01-getting-started.md) | How to search, install, update, and manage ecosystem packages with BlaiseVue CLI. |
 | 🧩 [**02. Package Anatomy**](02-package-anatomy.md) | Standard directory structure, `package.json`, Pascal units, `.bv` SFC components, and `setup.pas`. |
 | 🛠️ [**03. Creating a New Package**](03-creating-packages.md) | Step-by-step guide to scaffold libraries with `bv create --lib`, develop in an isolated sandbox, and run tests. |
-| 📦 [**04. Packaging & Publishing**](04-packaging-and-publishing.md) | Packaging with `bv lib pack`, publishing GitHub Releases with prefixed tags, and submitting to `ecosystem.json`. |
+| 📦 [**04. Packaging, Publishing & Examples**](04-packaging-and-publishing.md) | Packaging with `bv lib pack`, GitHub Releases with prefixed tags, `ecosystem.json`, and submitting demos to `examples/`. |
 | 🌐 [**05. Custom Registries**](05-custom-registries.md) | Hosting private or corporate package registries compatible with BlaiseVue CLI. |
+
+---
+
+## 💡 Runnable Examples & Demos
+
+Visit the [**`examples/`**](../examples/README.md) directory to explore real-world BlaiseVue projects demonstrating published packages in action. Authors can contribute demo projects directly under `examples/<package-name>/`.
 
 ---
 
