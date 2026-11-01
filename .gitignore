@@ -1,0 +1,14 @@
+# Build and release archives
+dist/
+*.zip
+*.sha256
+
+# Compiler units and binaries
+*.o
+*.ppu
+*.exe
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

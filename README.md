@@ -2,28 +2,60 @@
 
 Official multi-package ecosystem repository and extensions registry for [BlaiseVue](https://github.com/affonsoelias/BlaiseVue).
 
+---
+
 ## 📦 About
 
-This repository hosts official community wrappers, heavyweight graphics engines (Three.js, Plotly.js, Leaflet, etc.), and optional enterprise plugins for BlaiseVue.
+This repository hosts official community wrappers, heavyweight graphics engines (Three.js, Plotly.js, Leaflet, etc.), and optional enterprise plugins for BlaiseVue, preventing repository bloat and keeping the core framework lean.
 
-## 🚀 Usage with BlaiseVue CLI
+---
+
+## 📚 Documentation & Guides (`doc/`)
+
+Explore the comprehensive guides on using, developing, and publishing packages:
+
+| Guide | Description |
+|---|---|
+| 🚀 [**01. Getting Started & Usage**](doc/01-getting-started.md) | How to search, install, update, and manage ecosystem packages with BlaiseVue CLI. |
+| 🧩 [**02. Package Anatomy**](doc/02-package-anatomy.md) | Standard file structure, `package.json`, Pascal units, `.bv` components, and `setup.pas`. |
+| 🛠️ [**03. Creating a New Package**](doc/03-creating-packages.md) | Step-by-step library scaffolding (`bv create --lib`), HMR sandbox development, and tests. |
+| 📦 [**04. Packaging & Publishing**](doc/04-packaging-and-publishing.md) | Packaging with `bv lib pack`, GitHub Releases convention (`<pkg>@<ver>`), and submitting to `ecosystem.json`. |
+| 🌐 [**05. Custom & Private Registries**](doc/05-custom-registries.md) | How to host and connect custom corporate registries with `bv repo add`. |
+
+---
+
+## 🚀 Quick CLI Usage
 
 ```bash
-# List configured repositories
-bv repo list
+# 1. Search for available packages:
+bv lib search
 
-# Install latest version of a package
-bv lib install <package>
+# 2. Install latest version into current project:
+bv lib install test
 
-# Install a specific version
-bv lib install <package>@<version>
+# 3. Install a pinned version:
+bv lib install test@1.0.0
 
-# Install globally to framework SDK cache
-bv lib install <package> --global
+# 4. Install into global offline cache:
+bv lib install test --global
+
+# 5. Check for outdated packages:
+bv lib outdated
+
+# 6. Upgrade installed packages:
+bv lib update
 ```
+
+---
 
 ## 📋 Available Packages
 
 | Package | Latest Version | Description |
 |---|---|---|
 | `test` | `1.1.0` | Verification and testing package for the registry |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [Packaging & Publishing](doc/04-packaging-and-publishing.md) for guidelines on submitting new packages or updates via Pull Request.
