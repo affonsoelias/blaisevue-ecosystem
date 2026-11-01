@@ -1,121 +1,142 @@
-# 🚀 01. Primeiros Passos e Uso do Ecossistema
+# 🚀 01. Getting Started & Ecosystem Usage
 
-Este guia ensina como consumir e utilizar os pacotes do `blaisevue-ecosystem` nos seus projetos BlaiseVue através do CLI nativo (`bv`).
+This guide explains how to consume, install, update, and manage packages from the `blaisevue-ecosystem` in your BlaiseVue projects using the native CLI (`bv`).
 
 ---
 
-## 🔍 1. Pesquisando Pacotes
+## 🔍 1. Searching for Packages
 
-Você pode pesquisar por palavras-chave ou listar todos os pacotes disponíveis no catálogo:
+You can search by keyword or list all packages available in the catalog:
 
 ```bash
-# Buscar por um termo específico:
+# Search for a specific keyword:
 bv lib search chart
 
-# Listar todos os pacotes disponíveis no ecossistema:
+# List all packages available in the ecosystem:
 bv lib search
 ```
 
-**Exemplo de saída:**
+**Terminal Output Example:**
 ```text
-=== Busca de Pacotes no Ecossistema BlaiseVue ===
-Filtro: "chart"
+=== Package Search in BlaiseVue Ecosystem ===
+Filter: "chart"
 -----------------------------------------------------------------
   * blaise-charts (v1.0.0)
-    Descricao: Reusable Chart.js reactive components for BlaiseVue
-    Autor: BlaiseVue Core Team
+    Description: Reusable Chart.js reactive components for BlaiseVue
+    Author:      BlaiseVue Core Team
 
-1 pacote(s) encontrado(s). Para instalar, use: bv lib install <nome>
+1 package(s) found. To install, run: bv lib install <name>
 -----------------------------------------------------------------
 ```
 
 ---
 
-## 📥 2. Instalando Pacotes (`bv lib install`)
+## 📥 2. Installing Packages (`bv lib install`)
 
-O comando de instalação do BlaiseVue utiliza um algoritmo de resolução em 4 camadas:
+The BlaiseVue package manager resolves packages using a 4-tier hierarchy:
 
-### Instalação no Projeto Local (Padrão)
-Instala a biblioteca dentro da pasta `lib/<pacote>/` do seu projeto atual:
+### Local Project Installation (Default)
+Installs the library into your project's `lib/<package>/` folder:
 
 ```bash
-# Instala a versão mais recente (latest):
+# Install the latest stable version:
 bv lib install test
 
-# Instala uma versão histórica específica com @version:
+# Install a specific pinned version with @version:
 bv lib install test@1.0.0
 ```
 
-### Instalação no Cache Global do Usuário (`--global` / `-g`)
-Se você deseja baixar um pacote para tê-lo disponível para qualquer projeto futuro sem internet:
+### User Global Cache Installation (`--global` / `-g`)
+To download a package into your global offline cache for instant use across any future project:
 
 ```bash
 bv lib install test --global
-# ou simplesmente:
+# or using the short alias:
 bv lib install test -g
 ```
-O pacote será armazenado em `~/.blaisevue/packages/test/`. Quando você rodar `bv lib install test` em qualquer projeto posterior, o CLI copiará os arquivos do cache global em milissegundos sem fazer download da internet.
+
+The package is stored in `~/.blaisevue/packages/test/`. When running `bv lib install test` in any subsequent project, the CLI copies the package from the local cache in milliseconds without requiring an internet connection.
 
 ---
 
-## 📋 3. Listando Pacotes Instalados (`bv lib list`)
+## 📋 3. Listing Installed Packages (`bv lib list`)
 
 ```bash
-# Listar pacotes instalados no projeto atual (/lib):
+# List libraries installed in current project (/lib):
 bv lib list
 
-# Listar pacotes armazenados no cache global do usuário:
+# List packages cached in user global directory:
 bv lib list --global
 ```
 
----
-
-## 🔍 4. Verificando Atualizações (`bv lib outdated`)
-
-Para checar se alguma biblioteca instalada no seu projeto possui uma versão mais nova lançada no ecossistema:
-
-```bash
-bv lib outdated
-```
-
-**Exemplo de saída:**
+**Terminal Output Example (`bv lib list`):**
 ```text
-=== Verificacao de Versoes de Pacotes (bv lib outdated) ===
-Escopo: Local do Projeto (/lib)
-------------------------------------------------------------------------------
-Pacote                Instalada     Mais Recente    Status                    
-------------------------------------------------------------------------------
-test                  v1.0.0        v1.1.0          Desatualizado -> v1.1.0
-------------------------------------------------------------------------------
-1 de 1 pacote(s) desatualizado(s).
-Para atualizar, execute: bv lib update
+=== Installed Libraries in Project (/lib) ===
+-------------------------------------------------------
+  - test (v1.1.0)
+  - blaise-ui (v4.4.0) [Official Core]
+  - themes (v4.4.0) [Official Core]
+-------------------------------------------------------
+Official Core Packages (packages/core):
+  - blaise-themes, blaise-icons, blaise-ui, blaise-ui-mobile,
+    blaise-charts, blaise-reports, blaise-studio
+Use "bv lib list --global" to view packages in global cache.
+-------------------------------------------------------
 ```
 
 ---
 
-## 🔄 5. Atualizando Pacotes (`bv lib update`)
+## 🔍 4. Checking for Updates (`bv lib outdated`)
+
+To check whether installed libraries in your project or global cache have newer versions available:
 
 ```bash
-# Atualizar todas as bibliotecas do projeto para suas versões mais recentes:
+# Check local project libraries:
+bv lib outdated
+
+# Check user global cache:
+bv lib outdated --global
+```
+
+**Terminal Output Example:**
+```text
+=== Package Version Inspection (bv lib outdated) ===
+Scope: Local Project (/lib)
+------------------------------------------------------------------------------
+Package               Installed     Latest          Status                    
+------------------------------------------------------------------------------
+test                  v1.0.0        v1.1.0          Outdated -> v1.1.0
+blaise-ui             v4.4.0        v4.4.0          Official Core (Up to date)
+------------------------------------------------------------------------------
+1 of 2 package(s) are outdated.
+To update, run: bv lib update
+```
+
+---
+
+## 🔄 5. Upgrading Packages (`bv lib update`)
+
+```bash
+# Upgrade all out-of-date libraries in the project:
 bv lib update
 
-# Atualizar apenas um pacote específico:
+# Upgrade only a specific package:
 bv lib update test
 
-# Atualizar o cache global do usuário:
+# Upgrade packages in user global cache:
 bv lib update --global
 ```
 
 ---
 
-## 🗑️ 6. Removendo Pacotes (`bv lib remove`)
+## 🗑️ 6. Removing Packages (`bv lib remove`)
 
 ```bash
-# Remove o pacote do projeto atual (/lib):
+# Remove package from current project (/lib):
 bv lib remove test
 
-# Remove o pacote do cache global:
+# Remove package from user global cache:
 bv lib remove test --global
 ```
 
-> **Nota de Segurança**: Pacotes oficiais integrados do core do framework (`packages/core/`) são protegidos contra remoção acidental.
+> **Safety Notice**: Official core framework packages (`packages/core/`) are protected against accidental deletion.

@@ -1,23 +1,23 @@
-# 🌐 05. Criando Registros Próprios ou Privados
+# 🌐 05. Creating Custom & Private Registries
 
-O BlaiseVue foi projetado para ser totalmente descentralizado. Empresas e grupos de desenvolvedores podem criar seus próprios registros e ecossistemas privados de pacotes internos sem depender do repositório oficial da comunidade.
+BlaiseVue is architected to be completely decentralized. Enterprises and development teams can host their own private registries and internal package ecosystems without relying solely on the official public community repository.
 
 ---
 
-## 🏗️ 1. O que é um Registro BlaiseVue?
+## 🏗️ 1. What is a BlaiseVue Registry?
 
-Um registro de pacotes BlaiseVue é qualquer servidor HTTP/HTTPS ou repositório Git público ou privado que sirva um arquivo `ecosystem.json`.
+A BlaiseVue package registry is any HTTP/HTTPS server or Git repository (public or private) that serves a valid `ecosystem.json` manifest.
 
-Exemplo mínimo de `ecosystem.json`:
+Minimal `ecosystem.json` example:
 ```json
 {
   "name": "acme-corp-packages",
-  "description": "Repositório privado de pacotes e componentes internos da ACME Corp",
+  "description": "Internal package and component registry for ACME Corp",
   "version": "1.0.0",
   "packages": {
     "acme-ui-auth": {
       "name": "acme-ui-auth",
-      "description": "Componente corporativo de autenticação SSO e MFA",
+      "description": "Enterprise SSO and MFA authentication component",
       "latest": "2.4.0",
       "versions": ["2.3.0", "2.4.0"],
       "download": "https://github.com/acme-corp/acme-packages/releases/download/{tag}/{package}-{version}.zip"
@@ -28,34 +28,34 @@ Exemplo mínimo de `ecosystem.json`:
 
 ---
 
-## 🔗 2. Cadastrando o Repositório no CLI (`bv repo add`)
+## 🔗 2. Registering Repositories in the CLI (`bv repo add`)
 
-Cada desenvolvedor da equipe pode adicionar o repositório privado utilizando o comando `bv repo add`:
+Each developer on your team can configure the private repository using `bv repo add`:
 
 ```bash
 bv repo add acme https://github.com/acme-corp/acme-packages
 ```
 
-### URLs Suportadas:
-- Repositórios no GitHub: `https://github.com/usuario/repositorio`
-- Servidores web internos: `https://nexus.intranet.corp/blaisevue/ecosystem.json`
+### Supported URL Schemas:
+- GitHub Repositories: `https://github.com/organization/repository`
+- Internal Web Servers: `https://nexus.intranet.corp/blaisevue/ecosystem.json`
 
 ---
 
-## 🎯 3. Definindo o Repositório Padrão (`bv repo default`)
+## 🎯 3. Configuring the Default Repository (`bv repo default`)
 
-Se você deseja que o CLI procure pacotes primeiro no registro da sua empresa:
+To prioritize package resolution from your enterprise registry before querying the public community catalog:
 
 ```bash
 bv repo default acme
 ```
 
-Para verificar quais repositórios estão ativos:
+To inspect active repositories:
 ```bash
 bv repo list
 ```
 
-**Exemplo de saída:**
+**Terminal Output Example:**
 ```text
 === BlaiseVue Package Repositories ===
 Config: C:\Users\Pichau\.blaisevue\repos.json
@@ -68,22 +68,22 @@ Config: C:\Users\Pichau\.blaisevue\repos.json
       URL:  https://github.com/affonsoelias/blaisevue-ecosystem
       Type: ecosystem
 
-Total: 2 repositorio(s) configurado(s).
+Total: 2 configured repository(ies).
 ```
 
 ---
 
-## 🔄 4. Sincronizando e Buscando Pacotes
+## 🔄 4. Synchronizing & Searching Packages
 
-Para atualizar o cache local de metadados com todas as fontes cadastradas:
+To synchronize the local metadata cache with all registered sources:
 
 ```bash
 bv repo sync
 ```
 
-O CLI baixará o `ecosystem.json` de cada repositório e salvará em `~/.blaisevue/cache/<nome>-ecosystem.json`.
+The CLI downloads the `ecosystem.json` from each repository into `~/.blaisevue/cache/<name>-ecosystem.json`.
 
-Agora, qualquer comando de busca ou instalação encontrará tanto os pacotes públicos quanto os privados:
+Now, search and install commands seamlessly query both public and private packages:
 ```bash
 bv lib search acme
 bv lib install acme-ui-auth

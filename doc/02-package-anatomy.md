@@ -1,44 +1,44 @@
-# 🧩 02. Anatomia de um Pacote BlaiseVue
+# 🧩 02. BlaiseVue Package Anatomy
 
-Um pacote BlaiseVue é um módulo reutilizável contendo componentes Single-File (`.bv`), units Object Pascal (`.pas`), arquivos de estilo CSS, scripts e metadados.
+A BlaiseVue package is a modular, reusable distribution unit containing Single-File Components (`.bv`), Object Pascal units (`.pas`), CSS stylesheets, assets, scripts, and metadata.
 
 ---
 
-## 📁 Estrutura de Diretórios Recomendada
+## 📁 Recommended Directory Structure
 
-Um pacote distribuível segue a seguinte convenção:
+A distributable package adheres to the following layout:
 
 ```text
-meu-pacote/
-├── package.json         # Manifesto obrigatório de metadados e versão
-├── README.md            # Documentação e instruções de uso do componente
-├── LICENSE              # Licença do código (MIT, Apache-2.0, LGPL, etc.)
-├── setup.pas            # (Opcional) Script Pascal de setup executado na instalação
-├── MeuPacote.pas        # Unit principal Pascal (classes, tipos, helpers)
-├── BVMeuBotao.bv        # Componente SFC BlaiseVue (.bv)
-├── styles/              # (Opcional) Estilos CSS da biblioteca
-│   └── meu-pacote.css
-└── tests/               # (Opcional) Testes unitários do pacote
-    └── MeuPacote.test.pas
+my-package/
+├── package.json         # Mandatory metadata and version manifest
+├── README.md            # Component documentation and usage guide
+├── LICENSE              # Software license (MIT, Apache-2.0, LGPL-3.0, etc.)
+├── setup.pas            # (Optional) Pascal lifecycle script executed on install/remove
+├── MyPackage.pas        # Primary Pascal unit (classes, types, helper routines)
+├── BVMyButton.bv        # BlaiseVue Single-File Component (.bv)
+├── styles/              # (Optional) Component stylesheets
+│   └── my-package.css
+└── tests/               # (Optional) Automated unit tests
+    └── MyPackage.test.pas
 ```
 
 ---
 
-## 📄 O Arquivo `package.json`
+## 📄 The `package.json` Manifest
 
-O arquivo `package.json` na raiz da biblioteca identifica o pacote para o CLI do BlaiseVue e para o ecossistema:
+The `package.json` at the root of the library identifies the package for the BlaiseVue CLI and the ecosystem catalog:
 
 ```json
 {
-  "name": "meu-pacote",
+  "name": "my-package",
   "version": "1.0.0",
-  "description": "Componentes de gráficos e dashboards reativos para BlaiseVue",
-  "main": "MeuPacote.pas",
-  "author": "Seu Nome <seu-email@dominio.com>",
+  "description": "Reactive chart and dashboard components for BlaiseVue",
+  "main": "MyPackage.pas",
+  "author": "Your Name <your-email@example.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/usuario/meu-pacote"
+    "url": "https://github.com/user/my-package"
   },
   "keywords": [
     "blaisevue",
@@ -49,18 +49,18 @@ O arquivo `package.json` na raiz da biblioteca identifica o pacote para o CLI do
 }
 ```
 
-### Campos Importantes:
-- **`name`**: Nome único do pacote (letras minúsculas e hífens).
-- **`version`**: Versão no formato SemVer (`MAJOR.MINOR.PATCH`).
-- **`description`**: Breve resumo que aparecerá nas buscas (`bv lib search`).
-- **`main`**: Unit Pascal principal que exporta os tipos ou componentes.
-- **`license`**: Identificador SPDX da licença (MIT, Apache-2.0, LGPL-3.0, etc.).
+### Key Fields:
+- **`name`**: Unique package identifier (lowercase letters and hyphens).
+- **`version`**: Strict Semantic Versioning string (`MAJOR.MINOR.PATCH`).
+- **`description`**: Summary displayed in search results (`bv lib search`).
+- **`main`**: Entry-point Pascal unit exporting library classes and routines.
+- **`license`**: SPDX license identifier (MIT, Apache-2.0, LGPL-3.0, etc.).
 
 ---
 
-## ⚙️ O Script de Ciclo de Vida `setup.pas` (Opcional)
+## ⚙️ Lifecycle Script `setup.pas` (Optional)
 
-Se o seu pacote precisar configurar recursos adicionais no projeto do usuário durante a instalação ou limpeza durante a remoção, você pode incluir um script `setup.pas`:
+If your package needs to configure additional project assets during installation or perform cleanup during uninstallation, you can include an optional `setup.pas` script:
 
 ```pascal
 program setup;
@@ -76,26 +76,26 @@ begin
 
   if Action = 'install' then
   begin
-    WriteLn('  [Setup] Configurando recursos adicionais de meu-pacote...');
-    // Realiza ações customizadas de inicialização
+    WriteLn('  [Setup] Configuring assets for my-package...');
+    // Perform custom initialization actions
   end
   else if Action = 'remove' then
   begin
-    WriteLn('  [Setup] Limpando arquivos temporários de meu-pacote...');
-    // Realiza ações de desinstalação
+    WriteLn('  [Setup] Cleaning up temporary assets for my-package...');
+    // Perform uninstallation actions
   end;
 end.
 ```
 
-O CLI do BlaiseVue detecta automaticamente a presença do `setup.pas` e executa:
-- `setup.pas install` ao instalar o pacote via `bv lib install`.
-- `setup.pas remove` ao desinstalar o pacote via `bv lib remove`.
+The BlaiseVue CLI automatically detects `setup.pas` and executes:
+- `setup.pas install` upon package installation (`bv lib install`).
+- `setup.pas remove` upon package removal (`bv lib remove`).
 
 ---
 
-## 🎨 Injeção Automática de Recursos
+## 🎨 Automatic Asset Registration
 
-Quando uma biblioteca é instalada na pasta `lib/<pacote>/`:
-1. **Componentes `.bv`**: O compilador do BlaiseVue escaneia recursivamente a pasta `lib/` e registra todos os componentes `.bv` globalmente de forma automática.
-2. **Estilos `.css`**: Arquivos CSS presentes em `lib/` são detectados e injetados automaticamente no `index.html` gerado para produção.
-3. **Scripts `.js`**: Arquivos JavaScript de bibliotecas terceiras (como Chart.js ou Three.js minificados) colocados em `lib/` são copiados para `dist/js/lib/` e vinculados no HTML de produção.
+When a package is installed in `lib/<package>/`:
+1. **`.bv` Components**: The BlaiseVue compiler recursively scans `lib/` and registers all `.bv` Single-File Components globally without manual imports.
+2. **`.css` Stylesheets**: CSS files inside `lib/` are detected and automatically injected into the generated `dist/index.html`.
+3. **`.js` Vendor Scripts**: JavaScript vendor dependencies (e.g., Chart.js, Three.js) bundled inside `lib/` are copied to `dist/js/lib/` and linked in the HTML document.

@@ -1,54 +1,54 @@
-# 📦 04. Empacotamento, Releases e Publicação
+# 📦 04. Packaging, Releases & Publishing
 
-Este guia explica o fluxo completo para empacotar sua biblioteca, publicar os binários no GitHub Releases e submeter seu pacote ao catálogo oficial `blaisevue-ecosystem`.
+This guide explains the end-to-end workflow to package your library, publish release binaries on GitHub Releases, and submit your package to the official `blaisevue-ecosystem` catalog.
 
 ---
 
-## 📦 1. Empacotando a Biblioteca (`bv lib pack`)
+## 📦 1. Packaging the Library (`bv lib pack`)
 
-Quando sua biblioteca estiver pronta para ser distribuída, execute o comando de empacotamento na raiz do pacote:
+When your library is ready for distribution, run the packaging command at the package root:
 
 ```bash
 bv lib pack
-# ou alias:
+# or using the alias:
 bv lib dist
 ```
 
-### O que o comando faz:
-1. **Verificação Pré-voo (Pre-flight Tests)**: Roda automaticamente `bv test`. Se algum teste falhar, o processo é abortado imediatamente para impedir lançamentos defeituosos.
-2. **Filtragem de Produção**: Descarta arquivos desnecessários (`.git`, `node_modules`, arquivos de compilação `.o`, `.ppu`, `.tmp`).
-3. **Geração do ZIP**: Cria o artefato compactado em `dist/<nome>-<versao>.zip`.
-4. **Assinatura de Integridade (SHA-256)**: Gera o hash criptográfico do arquivo em `dist/<nome>-<versao>.zip.sha256`.
+### What the command does:
+1. **Pre-flight Tests**: Automatically runs `bv test`. If any test fails, packaging is aborted immediately to prevent distributing defective releases.
+2. **Production Pruning**: Excludes non-essential directories and build artifacts (`.git`, `node_modules`, compilation files `.o`, `.ppu`, `.tmp`).
+3. **ZIP Archive Generation**: Creates the compressed distribution bundle in `dist/<name>-<version>.zip`.
+4. **Integrity Checksum (SHA-256)**: Computes the cryptographic checksum in `dist/<name>-<version>.zip.sha256`.
 
-> **Dica**: Se quiser pular a execução de testes durante o empacotamento em scripts locais, passe a flag `--skip-tests`:
+> **Tip**: To skip test execution during rapid local builds, pass the `--skip-tests` flag:
 > ```bash
 > bv lib pack --skip-tests
 > ```
 
 ---
 
-## 🏷️ 2. Criando o Release no GitHub
+## 🏷️ 2. Creating GitHub Releases
 
-O ecossistema BlaiseVue utiliza tags prefixadas para suportar tanto repositórios dedicados quanto monorepositórios com múltiplos pacotes.
+The BlaiseVue ecosystem uses prefixed tags to support both dedicated single-package repositories and multi-package monorepositories.
 
-### Convenção de Tags:
-- Padrão da Tag: `<nome-do-pacote>@<versao>`
-- Exemplo: `test@1.0.0`, `meu-widget@2.1.0`
+### Tagging Convention:
+- Tag Pattern: `<package-name>@<version>`
+- Example: `test@1.0.0`, `my-widget@2.1.0`
 
-### Publicando o Release via GitHub CLI (`gh`):
+### Publishing via GitHub CLI (`gh`):
 ```bash
-gh release create "meu-widget@1.0.0" dist/meu-widget-1.0.0.zip \
-  --title "meu-widget v1.0.0" \
-  --notes "Primeiro lançamento oficial do meu-widget com suporte a gráficos reativos."
+gh release create "my-widget@1.0.0" dist/my-widget-1.0.0.zip \
+  --title "my-widget v1.0.0" \
+  --notes "First official release of my-widget with reactive chart components."
 ```
 
-Ou acesse a aba **Releases** do seu repositório no GitHub, clique em **Draft a new release**, crie a tag `meu-widget@1.0.0` e faça o upload do arquivo `dist/meu-widget-1.0.0.zip`.
+Alternatively, visit the **Releases** tab of your GitHub repository, click **Draft a new release**, specify the tag `my-widget@1.0.0`, and upload `dist/my-widget-1.0.0.zip`.
 
 ---
 
-## 🌐 3. Registrando o Pacote no `ecosystem.json`
+## 🌐 3. Registering the Package in `ecosystem.json`
 
-Para que qualquer usuário no mundo possa instalar seu pacote digitando `bv lib install meu-widget`, adicione a entrada da sua biblioteca no arquivo `ecosystem.json` do repositório `blaisevue-ecosystem`:
+To allow developers worldwide to install your package via `bv lib install my-widget`, add your package entry to `ecosystem.json` in the `blaisevue-ecosystem` repository:
 
 ```json
 {
@@ -56,27 +56,27 @@ Para que qualquer usuário no mundo possa instalar seu pacote digitando `bv lib 
   "description": "Official community ecosystem and library registry for BlaiseVue",
   "version": "1.0.0",
   "packages": {
-    "meu-widget": {
-      "name": "meu-widget",
-      "description": "Componentes de gráficos e dashboards reativos para BlaiseVue",
+    "my-widget": {
+      "name": "my-widget",
+      "description": "Reactive chart and dashboard components for BlaiseVue",
       "latest": "1.0.0",
       "versions": ["1.0.0"],
-      "download": "https://github.com/seu-usuario/seu-repositorio/releases/download/{tag}/{package}-{version}.zip"
+      "download": "https://github.com/your-username/your-repo/releases/download/{tag}/{package}-{version}.zip"
     }
   }
 }
 ```
 
-### Placeholders do Template de Download:
-- `{tag}` $\rightarrow$ Substituído pela tag correspondente (ex: `meu-widget@1.0.0`)
-- `{package}` $\rightarrow$ Nome do pacote (ex: `meu-widget`)
-- `{version}` $\rightarrow$ Versão solicitada (ex: `1.0.0`)
+### Download Template Placeholders:
+- `{tag}` $\rightarrow$ Substituted with the matching Git tag (e.g., `my-widget@1.0.0`)
+- `{package}` $\rightarrow$ Package identifier (e.g., `my-widget`)
+- `{version}` $\rightarrow$ Target SemVer version (e.g., `1.0.0`)
 
 ---
 
-## 🚀 4. Submetendo via Pull Request
+## 🚀 4. Submitting via Pull Request
 
-1. Faça um Fork do repositório [`blaisevue-ecosystem`](https://github.com/affonsoelias/blaisevue-ecosystem).
-2. Adicione sua entrada no `ecosystem.json`.
-3. Abra um Pull Request para a branch `main`.
-4. Assim que o PR for aprovado e mesclado, todos os usuários do BlaiseVue receberão seu pacote instantaneamente no próximo `bv repo sync`!
+1. Fork the [`blaisevue-ecosystem`](https://github.com/affonsoelias/blaisevue-ecosystem) repository.
+2. Add your package manifest entry into `ecosystem.json`.
+3. Submit a Pull Request targeting the `main` branch.
+4. Once merged, every BlaiseVue developer will discover and receive your package upon running `bv repo sync`!
