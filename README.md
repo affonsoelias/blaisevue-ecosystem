@@ -51,15 +51,27 @@ bv lib outdated
 
 # 6. Upgrade installed packages:
 bv lib update
+
+# 7. Manage developer tools:
+bv tool list
+bv tool search [term]
+bv tool install <tool-name>
+bv tool run <tool-name> [args...]
 ```
 
 ---
 
-## 📋 Available Packages
+## 📋 Available Packages & Tools
 
+### Libraries (`packages/` -> `bv lib`)
 | Package | Latest Version | Description | Examples & Demos |
 |---|---|---|---|
 | `test` | `1.1.0` | Verification and testing package for the registry | [View Guide](doc/01-getting-started.md) |
+
+### Developer Tools (`tools/` -> `bv tool`)
+| Tool | Latest Version | Type | Description | Guide |
+|---|---|---|---|---|
+| `test-tool` | `1.0.0` | `[co-official]` | Verification and testing tool for the BlaiseVue ecosystem | [Tools Guide](tools/README.md) |
 
 ---
 

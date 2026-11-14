@@ -1,0 +1,15 @@
+{
+  "name": "test-tool",
+  "version": "1.0.0",
+  "category": "Ecosystem Verification",
+  "description": "Verification and testing tool for the BlaiseVue ecosystem",
+  "author": "BlaiseVue Core Team",
+  "license": "MIT",
+  "type": "co-official",
+  "bin": "run.py",
+  "scripts": {
+    "status": "status.py",
+    "install": "install.py",
+    "remove": "remove.py"
+  }
+}

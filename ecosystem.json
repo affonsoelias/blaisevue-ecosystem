@@ -1,6 +1,6 @@
 {
   "name": "blaisevue-ecosystem",
-  "description": "Official community ecosystem and library registry for BlaiseVue",
+  "description": "Official community ecosystem, library registry and developer tools for BlaiseVue",
   "version": "1.0.0",
   "packages": {
     "test": {
@@ -9,6 +9,21 @@
       "latest": "1.1.0",
       "versions": ["1.0.0", "1.1.0"],
       "download": "https://github.com/affonsoelias/blaisevue-ecosystem/releases/download/{tag}/{package}-{version}.zip"
+    }
+  },
+  "tools": {
+    "test-tool": {
+      "name": "test-tool",
+      "type": "co-official",
+      "category": "Ecosystem Verification",
+      "description": "Verification and testing tool for the BlaiseVue ecosystem",
+      "latest": "1.0.0",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "download_url": "https://github.com/affonsoelias/blaisevue-ecosystem/releases/download/{tag}/{package}-{version}.zip"
+        }
+      ]
     }
   }
 }
