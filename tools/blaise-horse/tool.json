@@ -7,6 +7,8 @@
   "license": "MIT",
   "homepage": "https://github.com/affonsoelias/blaisevue-ecosystem/tree/main/tools/blaise-horse",
   "type": "co-official",
+  "command": "horse",
+  "aliases": ["horse"],
   "bin": "run.py",
   "scripts": {
     "status": "status.py",
