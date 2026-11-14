@@ -16,10 +16,12 @@ While **mORMot 2** remains BlaiseVue's enterprise-grade, high-throughput default
 
 ### Phase 1: Foundation (v1.0.0) — *Current Release*
 - [x] Isolated directory structure in `server-horse/` (zero clashing with `server/`).
-- [x] Zero-dependency native HTTP server using Free Pascal `fcl-web` (`fphttpserver`).
+- [x] Direct upstream fetching of official **HashLoad Horse** microframework from GitHub into `server-horse/lib/horse/`.
+- [x] Upstream synchronization command: `bv horse update`.
+- [x] Official Express-like routing syntax (`THorse.Get`, `THorse.Post`, `THorse.Use`, `THorse.Listen`) in Free Pascal Delphi mode.
 - [x] Pre-configured CORS middleware for local Vite/Vue development (`http://localhost:5173`).
-- [x] Built-in static file server with Single Page Application (SPA) HTML5 history mode fallback (`../dist`).
-- [x] Native CLI commands integrated into BlaiseVue (`bv horse init`, `build`, `run`, `status`, `kill`, `docker`, `deploy`, `remove`).
+- [x] Built-in static file server with Single Page Application (SPA) HTML5 history mode fallback (`dist/`).
+- [x] Native CLI commands integrated into BlaiseVue (`bv horse init`, `update`, `build`, `run`, `status`, `kill`, `docker`, `deploy`, `remove`).
 - [x] Safe uninstaller (`bv horse remove [-y]`) with zero impact on other project directories.
 - [x] Lazarus IDE project file (`server.lpi`) for visual F9 debugging.
 - [x] Alpine Linux multi-stage Dockerfile producing micro-containers (< 20MB).

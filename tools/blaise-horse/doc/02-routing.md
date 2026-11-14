@@ -1,82 +1,74 @@
 # 02 - Routing & API Endpoints
 
-Routing in `blaise-horse` follows a straightforward Express-style mental model implemented with Free Pascal procedures.
+Routing in `blaise-horse` utilizes the official **HashLoad Horse** microframework API, identical to modern Express.js routing in Pascal.
 
-## Handling Requests
+## Registering Routes
 
-Incoming requests are routed based on HTTP method and path:
+Routes are declared using `THorse.Get`, `THorse.Post`, `THorse.Put`, `THorse.Delete`, etc.:
 
 ```pascal
-procedure HandleRequest(Sender: TObject;
-  var ARequest: TFPHTTPConnectionRequest;
-  var AResponse: TFPHTTPConnectionResponse);
-var
-  Path, Method: string;
+uses
+  Horse, Horse.Commons;
+
+procedure GetHealth(Req: THorseRequest; Res: THorseResponse);
 begin
-  Path := ARequest.URL;
-  Method := UpperCase(ARequest.Method);
-
-  // Health check endpoint
-  if (Method = 'GET') and (Path = '/api/health') then
-  begin
-    SendJSON(AResponse, 200, '{"status":"ok","engine":"horse","uptime":"active"}');
-    Exit;
-  end;
-
-  // Custom resource endpoint
-  if (Method = 'GET') and (Path = '/api/items') then
-  begin
-    SendJSON(AResponse, 200, '[{"id":1,"name":"Widget"},{"id":2,"name":"Gadget"}]');
-    Exit;
-  end;
-
-  // 404 Not Found for unmapped API routes
-  if (Pos('/api/', Path) = 1) then
-  begin
-    SendJSON(AResponse, 404, '{"error":"Not Found","path":"' + Path + '"}');
-    Exit;
-  end;
-
-  // Fallback to static SPA hosting
-  ServeStaticOrSPA(ARequest, AResponse);
+  Res.ContentType('application/json; charset=utf-8')
+     .Send('{"status":"healthy","backend":"HashLoad Horse"}');
 end;
+
+procedure GetItems(Req: THorseRequest; Res: THorseResponse);
+begin
+  Res.ContentType('application/json; charset=utf-8')
+     .Send('[{"id":1,"name":"Widget"},{"id":2,"name":"Gadget"}]');
+end;
+
+begin
+  THorse.Get('/api/health', GetHealth);
+  THorse.Get('/api/items', GetItems);
+
+  THorse.Listen(9000);
+end.
 ```
 
 ---
 
 ## Reading Payloads (POST / PUT)
 
-To read JSON payloads from the client:
+To read JSON payloads sent in request bodies:
 
 ```pascal
+procedure CreateItem(Req: THorseRequest; Res: THorseResponse);
 var
   BodyStr: string;
 begin
-  if (Method = 'POST') and (Path = '/api/items') then
-  begin
-    SetLength(BodyStr, ARequest.ContentLength);
-    if ARequest.ContentLength > 0 then
-      ARequest.Content.Read(BodyStr[1], ARequest.ContentLength);
-
-    // Process BodyStr...
-    SendJSON(AResponse, 201, '{"created":true,"received":' + BodyStr + '}');
-    Exit;
-  end;
+  BodyStr := Req.Body;
+  // Process payload (e.g. parse with fpjson or save to DB)
+  
+  Res.Status(THTTPStatus.Created)
+     .ContentType('application/json; charset=utf-8')
+     .Send('{"success":true,"received":' + BodyStr + '}');
 end;
+
+begin
+  THorse.Post('/api/items', CreateItem);
+end.
 ```
 
 ---
 
-## Query Parameters
+## Reading URL Query Parameters & Headers
 
-Query strings can be parsed directly from `ARequest.QueryFields`:
+Access query string parameters and HTTP headers seamlessly:
 
 ```pascal
+procedure SearchItems(Req: THorseRequest; Res: THorseResponse);
 var
-  SearchTerm: string;
+  QueryTerm, AuthToken: string;
 begin
-  SearchTerm := ARequest.QueryFields.Values['q'];
-  if SearchTerm <> '' then
-    // Filter results...
+  QueryTerm := Req.Query['q'];
+  AuthToken := Req.Headers['Authorization'];
+  
+  Res.ContentType('application/json')
+     .Send('{"query":"' + QueryTerm + '"}');
 end;
 ```

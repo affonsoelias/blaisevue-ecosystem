@@ -1,66 +1,69 @@
 # 03 - Middlewares & CORS
 
-Middlewares in `blaise-horse` execute sequentially in the request handling pipeline before target route procedures.
+Middlewares in `blaise-horse` follow the standard HashLoad Horse pipeline pattern with `THorse.Use` and `TNextProc`.
 
-## Cross-Origin Resource Sharing (CORS)
+## Anatomy of a Horse Middleware
 
-During frontend development, Vite typically runs on `http://localhost:5173`, while the Horse backend listens on `http://localhost:9000`. To prevent CORS blocking, the template automatically registers CORS headers:
+Every middleware procedure receives `Req`, `Res`, and a `Next` procedure:
 
 ```pascal
-procedure ApplyCORS(var AResponse: TFPHTTPConnectionResponse);
+procedure MyMiddleware(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
 begin
-  AResponse.SetCustomHeader('Access-Control-Allow-Origin', '*');
-  AResponse.SetCustomHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  AResponse.SetCustomHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  // Execute code before route handler
+  Next();
+  // Execute code after route handler
 end;
 ```
 
-Preflight `OPTIONS` requests are acknowledged with HTTP 204:
+---
+
+## CORS Middleware
+
+`blaise-horse` comes with built-in CORS handling to support Vite development server hot reloading:
 
 ```pascal
-if Method = 'OPTIONS' then
+procedure MiddlewareCORS(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
 begin
-  AResponse.Code := 204;
-  AResponse.SendContent;
-  Exit;
+  Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Origin', '*');
+  Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  
+  if UpperCase(Req.RawWebRequest.Method) = 'OPTIONS' then
+  begin
+    Res.Status(THTTPStatus.NoContent).Send('');
+    Exit;
+  end;
+  
+  Next();
 end;
+
+begin
+  THorse.Use(MiddlewareCORS);
+end.
 ```
 
 ---
 
 ## Authentication Middleware
 
-You can enforce Bearer token verification on protected routes:
+You can protect routes by chaining middlewares:
 
 ```pascal
-function AuthenticateRequest(var ARequest: TFPHTTPConnectionRequest;
-  var AResponse: TFPHTTPConnectionResponse): Boolean;
-var
-  AuthHeader: string;
+procedure MiddlewareAuth(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
 begin
-  Result := False;
-  AuthHeader := ARequest.GetCustomHeader('Authorization');
-
-  if (AuthHeader = '') or (Pos('Bearer ', AuthHeader) <> 1) then
+  if Req.Headers['Authorization'] <> 'Bearer secret-token' then
   begin
-    SendJSON(AResponse, 401, '{"error":"Unauthorized: Missing or invalid Authorization header"}');
+    Res.Status(THTTPStatus.Unauthorized)
+       .ContentType('application/json')
+       .Send('{"error":"Unauthorized"}');
     Exit;
   end;
-
-  // Validate token...
-  Result := True;
+  Next();
 end;
-```
 
-Usage in route handler:
-
-```pascal
-if (Method = 'GET') and (Path = '/api/profile') then
 begin
-  if not AuthenticateRequest(ARequest, AResponse) then
-    Exit;
-
-  SendJSON(AResponse, 200, '{"user":"admin","role":"superuser"}');
-  Exit;
-end;
+  THorse.Route('/api/secure')
+    .Use(MiddlewareAuth)
+    .Get(GetSecureData);
+end.
 ```

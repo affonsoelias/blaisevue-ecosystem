@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 BlaiseVue Co-Official Developer Tool: blaise-horse
-Manages Horse microframework backend integration in an isolated server-horse/ directory.
+Manages official HashLoad Horse microframework backend integration in an isolated server-horse/ directory.
 """
 
 import os
@@ -9,11 +9,16 @@ import sys
 import shutil
 import subprocess
 import urllib.request
+import zipfile
+import io
 import json
 import time
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(TOOL_DIR, "templates")
+
+HORSE_GIT_URL = "https://github.com/HashLoad/horse.git"
+HORSE_ZIP_URL = "https://github.com/HashLoad/horse/archive/refs/heads/main.zip"
 
 def is_blaise_project_dir(d):
     if not os.path.isdir(d):
@@ -63,6 +68,61 @@ def require_blaise_project(cmd_context="bv horse"):
 def find_fpc():
     return shutil.which("fpc") or "fpc"
 
+def fetch_horse_upstream(target_horse_dir):
+    """
+    Fetches official HashLoad/Horse source code directly from GitHub into target_horse_dir.
+    Tries shallow git clone first; falls back to official repository ZIP archive.
+    """
+    horse_pas = os.path.join(target_horse_dir, "src", "Horse.pas")
+    if os.path.exists(horse_pas):
+        return True
+
+    print("  [*] Fetching official HashLoad/Horse framework from GitHub...")
+    os.makedirs(target_horse_dir, exist_ok=True)
+
+    git_bin = shutil.which("git")
+    if git_bin:
+        try:
+            print(f"      Cloning {HORSE_GIT_URL} (shallow clone)...")
+            res = subprocess.run(
+                [git_bin, "clone", "--depth", "1", HORSE_GIT_URL, target_horse_dir],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            if res.returncode == 0 and os.path.exists(horse_pas):
+                print("  [+] Official HashLoad/Horse repository cloned successfully.")
+                return True
+        except Exception as e:
+            print(f"      [!] git clone failed: {e}. Falling back to ZIP archive...")
+
+    # Fallback: GitHub ZIP download
+    print(f"      Downloading Horse release archive from {HORSE_ZIP_URL}...")
+    try:
+        req = urllib.request.Request(HORSE_ZIP_URL, headers={"User-Agent": "BlaiseVue-Horse-Tool"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            zip_bytes = resp.read()
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
+            for member in z.infolist():
+                parts = member.filename.split("/", 1)
+                if len(parts) > 1 and parts[1]:
+                    subpath = parts[1]
+                    target_file = os.path.join(target_horse_dir, subpath)
+                    if member.is_dir():
+                        os.makedirs(target_file, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(target_file), exist_ok=True)
+                        with z.open(member) as src, open(target_file, "wb") as dst:
+                            shutil.copyfileobj(src, dst)
+        if os.path.exists(horse_pas):
+            print("  [+] Official HashLoad/Horse archive extracted successfully.")
+            return True
+    except Exception as e:
+        print(f"  [ERROR] Failed to download Horse from GitHub: {e}")
+        return False
+
+    return False
+
 def cmd_init():
     root = require_blaise_project("bv horse init")
     target_dir = os.path.join(root, "server-horse")
@@ -76,7 +136,12 @@ def cmd_init():
     print("================================================================")
 
     os.makedirs(os.path.join(target_dir, "bin"), exist_ok=True)
-    os.makedirs(os.path.join(target_dir, "lib"), exist_ok=True)
+    os.makedirs(os.path.join(target_dir, "lib", "units"), exist_ok=True)
+
+    horse_dest = os.path.join(target_dir, "lib", "horse")
+    if not fetch_horse_upstream(horse_dest):
+        print("  [WARNING] Could not fetch Horse source from GitHub automatically.")
+        print("            Please ensure internet connectivity or clone https://github.com/HashLoad/horse into server-horse/lib/horse.")
 
     # Copy templates
     shutil.copy(os.path.join(TEMPLATES_DIR, "server.pas"), os.path.join(target_dir, "server.pas"))
@@ -88,17 +153,54 @@ def cmd_init():
         with open(env_path, "w", encoding="utf-8") as f:
             f.write("# BlaiseVue Horse Environment Configuration\nPORT=9000\n")
 
-    print("  [+] Created server-horse/server.pas (CORS, JSON, and static ../dist/ serving)")
-    print("  [+] Created server-horse/server.lpi (Lazarus IDE ready with F9 debugging)")
+    print("  [+] Installed official HashLoad/Horse source in server-horse/lib/horse/")
+    print("  [+] Created server-horse/server.pas (Official HashLoad Horse API & SPA serving)")
+    print("  [+] Created server-horse/server.lpi (Lazarus IDE ready with Delphi-mode & F9 debugging)")
     print("  [+] Created server-horse/Dockerfile (Alpine multi-stage micro-container)")
     print("  [+] Created server-horse/.env (Default PORT=9000)")
     print("================================================================")
     print("Next steps:")
     print("  1. Run 'bv horse run' to compile and launch on http://localhost:9000")
-    print("  2. Open server-horse/server.lpi in Lazarus IDE to debug")
-    print("  3. To remove this backend later, run 'bv horse remove'")
+    print("  2. Run 'bv horse update' to pull the latest upstream Horse updates")
+    print("  3. Open server-horse/server.lpi in Lazarus IDE to debug")
+    print("  4. To remove this backend later, run 'bv horse remove'")
     print("")
     return 0
+
+def cmd_update():
+    root = require_blaise_project("bv horse update")
+    target_horse_dir = os.path.join(root, "server-horse", "lib", "horse")
+    if not os.path.exists(target_horse_dir):
+        print("[!] No Horse framework found in server-horse/lib/horse/. Run 'bv horse init' first.")
+        return 1
+
+    print("================================================================")
+    print("  Updating HashLoad/Horse upstream framework in server-horse/")
+    print("================================================================")
+
+    git_bin = shutil.which("git")
+    is_git_repo = os.path.isdir(os.path.join(target_horse_dir, ".git"))
+
+    if is_git_repo and git_bin:
+        print("  [*] Running 'git pull' in server-horse/lib/horse/ ...")
+        res = subprocess.run([git_bin, "pull", "--ff-only"], cwd=target_horse_dir)
+        if res.returncode == 0:
+            print("  [SUCCESS] HashLoad/Horse is up to date!")
+            return 0
+
+    print("  [*] Re-downloading latest HashLoad/Horse archive from GitHub...")
+    try:
+        shutil.rmtree(target_horse_dir)
+    except Exception:
+        pass
+
+    ok = fetch_horse_upstream(target_horse_dir)
+    if ok:
+        print("  [SUCCESS] HashLoad/Horse updated to latest version.")
+        return 0
+    else:
+        print("  [ERROR] Update failed.")
+        return 1
 
 def cmd_build(is_release=False):
     root = require_blaise_project("bv horse build")
@@ -108,20 +210,36 @@ def cmd_build(is_release=False):
         print("[!] No Horse project found in server-horse/. Initializing first...")
         cmd_init()
 
+    horse_src = os.path.join(server_dir, "lib", "horse", "src")
+    if not os.path.exists(horse_src):
+        print("  [*] Horse source not found. Fetching upstream from GitHub...")
+        fetch_horse_upstream(os.path.join(server_dir, "lib", "horse"))
+
     bin_dir = os.path.join(server_dir, "bin")
+    units_dir = os.path.join(server_dir, "lib", "units")
     os.makedirs(bin_dir, exist_ok=True)
+    os.makedirs(units_dir, exist_ok=True)
     exe_name = "server.exe" if sys.platform.startswith("win") else "server"
     target_exe = os.path.join(bin_dir, exe_name)
 
     fpc = find_fpc()
-    mode_str = "RELEASE (-O3, stripped symbols)" if is_release else "DEBUG (-O2, debug symbols)"
+    mode_str = "RELEASE (-O3, stripped symbols)" if is_release else "DEBUG (-O1, debug symbols)"
     print(f"Building BlaiseVue Horse Server ({mode_str})...")
 
-    args = [fpc, "-MObjFPC", "-Sh", "-FE" + bin_dir, "-o" + target_exe]
+    args = [
+        fpc,
+        "-MDelphi",
+        "-Sh",
+        "-FE" + bin_dir,
+        "-FU" + units_dir,
+        "-Fu" + horse_src,
+        "-Fi" + horse_src,
+        "-o" + target_exe
+    ]
     if is_release:
         args += ["-O3", "-Xs", "-CX", "-XX"]
     else:
-        args += ["-O2", "-g", "-gl"]
+        args += ["-O1", "-g"]
     args.append(server_pas)
 
     res = subprocess.run(args, cwd=server_dir)
@@ -218,6 +336,7 @@ def cmd_docker(build_flag=False):
 def cmd_deploy(zip_flag=False):
     root = require_blaise_project("bv horse deploy")
     deploy_dir = os.path.join(root, "deploy", "horse")
+    os.makedirs(deploy_dir, exist_ok=True)
 
     print("Assembling standalone Horse deployment bundle in deploy/horse/...")
     cmd_build(is_release=True)
@@ -272,12 +391,13 @@ def cmd_remove(force=False):
     return 0
 
 def print_usage():
-    print("Usage: bv horse <init|run|build|status|kill|docker|deploy|remove> [options]")
+    print("Usage: bv horse <init|update|run|build|status|kill|docker|deploy|remove> [options]")
     print("")
     print("Available Commands:")
-    print("  init                       Scaffolds Horse server in server-horse/")
+    print("  init                       Scaffolds Horse server in server-horse/ and fetches upstream Horse")
+    print("  update                     Pulls the latest upstream HashLoad/Horse updates from GitHub")
     print("  run [--release] [--port p] Compiles and starts native Horse server (Default Port 9000)")
-    print("  build [--release]          Compiles server.pas with Free Pascal (FPC)")
+    print("  build [--release]          Compiles server.pas with Free Pascal (FPC in Delphi mode)")
     print("  status [--port p]          Queries running Horse health check endpoint (/api/health)")
     print("  kill [--port p]            Terminates active processes on server port")
     print("  docker [--build]           Generates lightweight Alpine container in server-horse/")
@@ -296,6 +416,8 @@ def main():
 
     if subcmd == "init":
         sys.exit(cmd_init())
+    elif subcmd == "update":
+        sys.exit(cmd_update())
     elif subcmd == "build":
         sys.exit(cmd_build(is_release="--release" in sub_args))
     elif subcmd == "run":

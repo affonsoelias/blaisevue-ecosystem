@@ -24,8 +24,14 @@
             <Filename Value="bin\server"/>
           </Target>
           <SearchPaths>
-            <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+            <OtherUnitFiles Value="lib\horse\src"/>
+            <UnitOutputDirectory Value="lib\units"/>
           </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <SyntaxMode Value="Delphi"/>
+            </SyntaxOptions>
+          </Parsing>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
             <Optimizations>
@@ -53,8 +59,15 @@
         <Filename Value="bin\server"/>
       </Target>
       <SearchPaths>
-        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+        <IncludeFiles Value="lib\horse\src"/>
+        <OtherUnitFiles Value="lib\horse\src"/>
+        <UnitOutputDirectory Value="lib\units"/>
       </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <SyntaxMode Value="Delphi"/>
+        </SyntaxOptions>
+      </Parsing>
     </CompilerOptions>
     <Units>
       <Unit>
@@ -70,7 +83,13 @@
       <Filename Value="bin\server"/>
     </Target>
     <SearchPaths>
-      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      <OtherUnitFiles Value="lib\horse\src"/>
+      <UnitOutputDirectory Value="lib\units"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <SyntaxMode Value="Delphi"/>
+      </SyntaxOptions>
+    </Parsing>
   </CompilerOptions>
 </CONFIG>

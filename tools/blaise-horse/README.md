@@ -1,12 +1,14 @@
 # blaise-horse: Horse Backend Tool for BlaiseVue
 
-`blaise-horse` is a co-official developer tool for the [BlaiseVue](https://github.com/affonsoelias/BlaiseVue) ecosystem. It provides first-class support for scaffolding, building, running, and deploying lightweight REST API backends using the **Horse microframework** (inspired by Express.js) and Free Pascal's native networking stack.
+`blaise-horse` is a co-official developer tool for the [BlaiseVue](https://github.com/affonsoelias/BlaiseVue) ecosystem. It provides first-class support for scaffolding, building, running, and deploying lightweight REST API backends using the official **[HashLoad Horse](https://github.com/HashLoad/horse)** microframework (Express.js-like routing for modern Pascal) and Free Pascal's native networking stack.
 
 ## Highlights
 
+- **Direct Upstream Integration**: Pulls the official, latest source code of **HashLoad Horse** directly from GitHub into `server-horse/lib/horse/` upon initialization.
+- **Upstream Sync**: Keep your Horse framework updated with a single command: `bv horse update`.
 - **Complete Isolation**: Lives exclusively in `server-horse/` and never conflicts with the default `server/` (mORMot 2).
-- **Zero-Dependency Native Server**: Built on Free Pascal's standard `fcl-web` / `fphttpserver` stack, with zero mandatory external dynamic libraries. Compiles into an ultra-fast, single self-contained native executable.
-- **Full SPA Integration**: Pre-configured to serve the compiled BlaiseVue frontend (`../dist/`) with SPA fallback routing, CORS support, and JSON API routing out of the box.
+- **Zero-Dependency Native Server**: Compiles into an ultra-fast, self-contained native executable using Free Pascal (`-MDelphi`).
+- **Full SPA Integration**: Pre-configured to serve the compiled BlaiseVue frontend (`dist/`) with SPA fallback routing, CORS support, and JSON API routing out of the box.
 - **Symmetric CLI**: Control everything via `bv horse <command>` or `bv tool run blaise-horse <command>`.
 - **Clean Removal**: Supports `bv horse remove [-y]` to safely purge `server-horse/` without touching the frontend or other parts of your project.
 - **Lazarus & FPC Ready**: Includes `server.lpi` project files for visual F9 debugging in Lazarus IDE alongside command-line building with `fpc`.
@@ -38,7 +40,8 @@ Inside any BlaiseVue project root, run:
 bv horse init
 ```
 
-This creates the isolated `server-horse/` directory with:
+This clones/downloads the official **HashLoad/Horse** repository and sets up `server-horse/`:
+- `lib/horse/`: Official HashLoad Horse source code.
 - `server.pas`: Native Pascal REST server with CORS, JSON parsing, static SPA hosting, and sample endpoints.
 - `server.lpi`: Lazarus project configuration file for IDE debugging.
 - `Dockerfile`: Multi-stage Alpine container definition for microservice deployment (< 20MB).
@@ -64,7 +67,14 @@ Query the running Horse server:
 bv horse status
 ```
 
-### 4. Build standalone binaries
+### 4. Update upstream Horse
+Fetch the latest features and patches from HashLoad:
+
+```bash
+bv horse update
+```
+
+### 5. Build standalone binaries
 Compile `server-horse/server.pas` to `server-horse/bin/server.exe`:
 
 ```bash
@@ -72,14 +82,14 @@ bv horse build
 bv horse build --release
 ```
 
-### 5. Production deployment bundle
+### 6. Production deployment bundle
 Assemble a ready-to-deploy bundle containing the release binary and the built frontend in `deploy/horse/`:
 
 ```bash
 bv horse deploy
 ```
 
-### 6. Remove Horse backend
+### 7. Remove Horse backend
 If you decide to switch backends or keep only the frontend:
 
 ```bash
@@ -92,7 +102,8 @@ bv horse remove -y
 
 | Command | Description |
 | :--- | :--- |
-| `bv horse init` | Scaffolds the Horse backend into `server-horse/`. |
+| `bv horse init` | Scaffolds `server-horse/` and fetches upstream HashLoad Horse from GitHub. |
+| `bv horse update` | Pulls the latest HashLoad Horse framework updates from GitHub. |
 | `bv horse run [--release] [--port p]` | Compiles and starts the Horse server (default: port 9000). |
 | `bv horse build [--release]` | Compiles `server-horse/server.pas` with Free Pascal (`fpc`). |
 | `bv horse status [--port p]` | Checks the health endpoint of the running server (`/api/health`). |
@@ -116,9 +127,12 @@ my-project/
 ├── server/                 # mORMot 2 backend (default, if enabled)
 └── server-horse/           # Horse backend (isolated)
     ├── .env                # Port and environment variables
-    ├── server.pas          # Entry point and route registrations
+    ├── server.pas          # Entry point and route registrations (Horse syntax)
     ├── server.lpi          # Lazarus IDE project file
     ├── Dockerfile          # Lightweight containerization
+    ├── lib/
+    │   ├── horse/          # Official HashLoad Horse repository clone
+    │   └── units/          # FPC compiled unit outputs (.ppu, .o)
     └── bin/
         └── server.exe      # Compiled native executable
 ```

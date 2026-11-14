@@ -1,73 +1,48 @@
 program BasicApi;
 
-{$mode objfpc}{$H+}
+{$MODE DELPHI}{$H+}
 
 uses
-  SysUtils, Classes, fphttpapp, fphttpserver;
+  {$IFDEF UNIX}{$IFDEF UseCThreads}cthreads,{$ENDIF}{$ENDIF}
+  Horse,
+  Horse.Commons,
+  SysUtils;
 
-type
-  TBasicServerApp = class(TFPHttpServer)
-  public
-    procedure HandleRequest(Sender: TObject;
-      var ARequest: TFPHTTPConnectionRequest;
-      var AResponse: TFPHTTPConnectionResponse);
-  end;
-
-procedure TBasicServerApp.HandleRequest(Sender: TObject;
-  var ARequest: TFPHTTPConnectionRequest;
-  var AResponse: TFPHTTPConnectionResponse);
-var
-  Method, Path: string;
+procedure MiddlewareCORS(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
 begin
-  Method := UpperCase(ARequest.Method);
-  Path := ARequest.URL;
-
-  // CORS
-  AResponse.SetCustomHeader('Access-Control-Allow-Origin', '*');
-  AResponse.SetCustomHeader('Content-Type', 'application/json; charset=utf-8');
-
-  if Method = 'OPTIONS' then
+  Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Origin', '*');
+  Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  if UpperCase(Req.RawWebRequest.Method) = 'OPTIONS' then
   begin
-    AResponse.Code := 204;
-    AResponse.SendContent;
+    Res.Status(THTTPStatus.NoContent).Send('');
     Exit;
   end;
-
-  if (Method = 'GET') and (Path = '/api/health') then
-  begin
-    AResponse.Code := 200;
-    AResponse.Content := '{"status":"ok","time":"' + DateTimeToStr(Now) + '"}';
-    AResponse.SendContent;
-    Exit;
-  end;
-
-  if (Method = 'GET') and (Path = '/api/items') then
-  begin
-    AResponse.Code := 200;
-    AResponse.Content := '[{"id":1,"name":"Item A"},{"id":2,"name":"Item B"}]';
-    AResponse.SendContent;
-    Exit;
-  end;
-
-  AResponse.Code := 404;
-  AResponse.Content := '{"error":"Not Found"}';
-  AResponse.SendContent;
+  Next();
 end;
 
-var
-  Server: TBasicServerApp;
-  PortVal: Word;
+procedure GetHealth(Req: THorseRequest; Res: THorseResponse);
 begin
-  PortVal := 9000;
-  if ParamCount >= 1 then
-    PortVal := StrToIntDef(ParamStr(1), 9000);
+  Res.ContentType('application/json; charset=utf-8').Send('{"status":"ok","time":"' + DateTimeToStr(Now) + '"}');
+end;
 
-  Server := TBasicServerApp.Create(nil);
-  try
-    Server.Port := PortVal;
-    WriteLn('Basic API Server listening on port ', PortVal, '...');
-    Server.Active := True;
-  finally
-    Server.Free;
-  end;
+procedure GetItems(Req: THorseRequest; Res: THorseResponse);
+begin
+  Res.ContentType('application/json; charset=utf-8').Send('[{"id":1,"name":"Item A"},{"id":2,"name":"Item B"}]');
+end;
+
+procedure PostItems(Req: THorseRequest; Res: THorseResponse);
+begin
+  Res.Status(THTTPStatus.Created).ContentType('application/json; charset=utf-8').Send('{"created":true,"body":' + Req.Body + '}');
+end;
+
+begin
+  THorse.Use(MiddlewareCORS);
+
+  THorse.Get('/api/health', GetHealth);
+  THorse.Get('/api/items', GetItems);
+  THorse.Post('/api/items', PostItems);
+
+  WriteLn('Basic Horse REST API running on port 9000...');
+  THorse.Listen(9000);
 end.
