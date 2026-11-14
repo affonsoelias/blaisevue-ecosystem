@@ -15,19 +15,56 @@ import time
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(TOOL_DIR, "templates")
 
-def get_project_root():
-    cur = os.getcwd()
-    while cur and os.path.dirname(cur) != cur:
-        if os.path.exists(os.path.join(cur, "app.cfg")) or os.path.exists(os.path.join(cur, "package.json")):
+def is_blaise_project_dir(d):
+    if not os.path.isdir(d):
+        return False
+    if os.path.exists(os.path.join(d, "app.cfg")):
+        return True
+    if os.path.exists(os.path.join(d, "src", "app.bv")):
+        return True
+    if os.path.isdir(os.path.join(d, "src", "views")) or os.path.isdir(os.path.join(d, "src", "components")):
+        return True
+    pkg = os.path.join(d, "package.json")
+    if os.path.exists(pkg):
+        try:
+            with open(pkg, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read().lower()
+                if "blaise" in content:
+                    return True
+        except Exception:
+            pass
+    return False
+
+def require_blaise_project(cmd_context="bv horse"):
+    cur = os.path.abspath(os.getcwd())
+    while cur:
+        if is_blaise_project_dir(cur):
+            os.chdir(cur)
             return cur
-        cur = os.path.dirname(cur)
-    return os.getcwd()
+        parent = os.path.dirname(cur)
+        if not parent or parent == cur:
+            break
+        cur = parent
+
+    print("")
+    print("========================================================================")
+    print(f"  [ERROR] \"{cmd_context}\" can only be executed inside a BlaiseVue project.")
+    print(f"  Current directory: {os.getcwd()}")
+    print("")
+    print("  To create a new BlaiseVue project:")
+    print("    bv create <project-name>")
+    print("")
+    print("  Or switch to an existing registered project:")
+    print("    bv use <project-name>")
+    print("========================================================================")
+    print("")
+    sys.exit(1)
 
 def find_fpc():
     return shutil.which("fpc") or "fpc"
 
 def cmd_init():
-    root = get_project_root()
+    root = require_blaise_project("bv horse init")
     target_dir = os.path.join(root, "server-horse")
     if os.path.exists(target_dir):
         print(f"[!] Horse backend already exists at: {target_dir}")
@@ -64,7 +101,7 @@ def cmd_init():
     return 0
 
 def cmd_build(is_release=False):
-    root = get_project_root()
+    root = require_blaise_project("bv horse build")
     server_dir = os.path.join(root, "server-horse")
     server_pas = os.path.join(server_dir, "server.pas")
     if not os.path.exists(server_pas):
@@ -95,7 +132,7 @@ def cmd_build(is_release=False):
     return res.returncode
 
 def cmd_run(args_list):
-    root = get_project_root()
+    root = require_blaise_project("bv horse run")
     server_dir = os.path.join(root, "server-horse")
     bin_dir = os.path.join(server_dir, "bin")
     exe_name = "server.exe" if sys.platform.startswith("win") else "server"
@@ -162,7 +199,7 @@ def cmd_kill(port="9000"):
     return 0
 
 def cmd_docker(build_flag=False):
-    root = get_project_root()
+    root = require_blaise_project("bv horse docker")
     server_dir = os.path.join(root, "server-horse")
     dockerfile = os.path.join(server_dir, "Dockerfile")
     if not os.path.exists(dockerfile):
@@ -179,9 +216,8 @@ def cmd_docker(build_flag=False):
         return 0
 
 def cmd_deploy(zip_flag=False):
-    root = get_project_root()
+    root = require_blaise_project("bv horse deploy")
     deploy_dir = os.path.join(root, "deploy", "horse")
-    os.makedirs(deploy_dir, exist_ok=True)
 
     print("Assembling standalone Horse deployment bundle in deploy/horse/...")
     cmd_build(is_release=True)
@@ -204,7 +240,7 @@ def cmd_deploy(zip_flag=False):
     return 0
 
 def cmd_remove(force=False):
-    root = get_project_root()
+    root = require_blaise_project("bv horse remove")
     server_dir = os.path.join(root, "server-horse")
     deploy_horse = os.path.join(root, "deploy", "horse")
 
