@@ -17,10 +17,11 @@ Explore the comprehensive guides on using, developing, and publishing packages:
 | Guide | Description |
 |---|---|
 | 🚀 [**01. Getting Started & Usage**](doc/01-getting-started.md) | How to search, install, update, and manage ecosystem packages with BlaiseVue CLI. |
-| 🧩 [**02. Package Anatomy**](doc/02-package-anatomy.md) | Standard file structure, `package.json`, Pascal units, `.bv` components, and `setup.pas`. |
+| 🧩 [**02. Package Anatomy**](doc/02-package-anatomy.md) | Standard file structure, `package.json`, Pascal units, `.bv` components, `setup.pas`, and docs/examples. |
 | 🛠️ [**03. Creating a New Package**](doc/03-creating-packages.md) | Step-by-step library scaffolding (`bv create --lib`), HMR sandbox development, and tests. |
 | 📦 [**04. Packaging, Publishing & Examples**](doc/04-packaging-and-publishing.md) | Packaging with `bv lib pack`, GitHub Releases convention (`<pkg>@<ver>`), submitting to `ecosystem.json`, and contributing examples. |
 | 🌐 [**05. Custom & Private Registries**](doc/05-custom-registries.md) | How to host and connect custom corporate registries with `bv repo add`. |
+| 🛠️ [**06. Developer Tools Ecosystem**](doc/06-developer-tools-ecosystem.md) | Complete guide for developer tools (`bv tool`), `tool.json`, lifecycle scripts, CLI execution (`bv tool run`), and publishing. |
 
 ---
 

@@ -16,11 +16,19 @@ my-package/
 ├── setup.pas            # (Optional) Pascal lifecycle script executed on install/remove
 ├── MyPackage.pas        # Primary Pascal unit (classes, types, helper routines)
 ├── BVMyButton.bv        # BlaiseVue Single-File Component (.bv)
+├── doc/                 # (Optional) Extended architectural documentation and manuals
+│   └── 01-overview.md
+├── examples/            # (Optional) Runnable code examples, demos, and sample configs
+│   └── basic-usage.pas
 ├── styles/              # (Optional) Component stylesheets
 │   └── my-package.css
 └── tests/               # (Optional) Automated unit tests
     └── MyPackage.test.pas
 ```
+
+### Documentation & Examples Directories:
+- **`doc/`**: Authors can include extended technical documentation, architectural guides, and API manuals directly within the package.
+- **`examples/`**: Bundles sample usage snippets, demo components, or example configurations to help consumers integrate the package immediately.
 
 ---
 

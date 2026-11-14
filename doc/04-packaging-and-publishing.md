@@ -46,14 +46,15 @@ Alternatively, visit the **Releases** tab of your GitHub repository, click **Dra
 
 ---
 
-## 🌐 3. Registering the Package in `ecosystem.json`
+## 🌐 3. Registering Packages & Tools in `ecosystem.json`
 
-To allow developers worldwide to install your package via `bv lib install my-widget`, add your package entry to `ecosystem.json` in the `blaisevue-ecosystem` repository:
+To allow developers worldwide to install your package via `bv lib install my-widget` or your tool via `bv tool install my-tool`, add your entry to `ecosystem.json` in the `blaisevue-ecosystem` repository:
 
+### Library Registration (`packages` section):
 ```json
 {
   "name": "blaisevue-ecosystem",
-  "description": "Official community ecosystem and library registry for BlaiseVue",
+  "description": "Official community ecosystem, library registry and developer tools for BlaiseVue",
   "version": "1.0.0",
   "packages": {
     "my-widget": {
@@ -63,13 +64,35 @@ To allow developers worldwide to install your package via `bv lib install my-wid
       "versions": ["1.0.0"],
       "download": "https://github.com/your-username/your-repo/releases/download/{tag}/{package}-{version}.zip"
     }
+  },
+  "tools": {
+    "my-tool": {
+      "name": "my-tool",
+      "type": "third-party",
+      "category": "Developer Tool",
+      "description": "Custom developer utility for BlaiseVue projects",
+      "latest": "1.0.0",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "download_url": "https://github.com/your-username/your-repo/releases/download/{tag}/{package}-{version}.zip"
+        }
+      ]
+    }
   }
 }
 ```
 
+### Packaging Developer Tools (`bv tool pack`):
+For developer tools, use `bv tool pack` at the tool's root directory:
+```bash
+bv tool pack
+```
+This executes the tool's `pack.py` (if defined), validates `tool.json`, packages the archive into `dist/<name>-<version>.zip`, and computes the SHA-256 checksum file.
+
 ### Download Template Placeholders:
 - `{tag}` $\rightarrow$ Substituted with the matching Git tag (e.g., `my-widget@1.0.0`)
-- `{package}` $\rightarrow$ Package identifier (e.g., `my-widget`)
+- `{package}` $\rightarrow$ Package or tool identifier (e.g., `my-widget`)
 - `{version}` $\rightarrow$ Target SemVer version (e.g., `1.0.0`)
 
 ---

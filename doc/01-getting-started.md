@@ -44,6 +44,11 @@ bv lib install test
 
 # Install a specific pinned version with @version:
 bv lib install test@1.0.0
+
+# Install using flexible SemVer range matching (^, ~, latest):
+bv lib install test@^1.0.0      # Compatible major release (>= 1.0.0, < 2.0.0)
+bv lib install test@~1.1.0      # Compatible minor release (>= 1.1.0, < 1.2.0)
+bv lib install test@latest      # Highest available version in registered repos
 ```
 
 ### User Global Cache Installation (`--global` / `-g`)
@@ -140,3 +145,11 @@ bv lib remove test --global
 ```
 
 > **Safety Notice**: Official core framework packages (`packages/core/`) are protected against accidental deletion.
+
+---
+
+## 🛠️ 7. Developer Tools Management (`bv tool`)
+
+Looking to install developer tools, IDE packages, and CLI utilities instead of runtime libraries?
+
+See the complete guide in [**06. Developer Tools Ecosystem (`bv tool`)**](06-developer-tools-ecosystem.md) to learn how to install, run (`bv tool run`), and manage development utilities.
