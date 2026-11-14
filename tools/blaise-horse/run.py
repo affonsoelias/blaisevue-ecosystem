@@ -333,30 +333,55 @@ def cmd_upgrade(sub_args):
             target_tag = a.strip()
 
     if not target_tag:
+        available_tags = []
+        git_bin = shutil.which("git")
+        if git_bin:
+            try:
+                print("  [*] Querying available releases from HashLoad GitHub ...")
+                proc = subprocess.run([git_bin, "ls-remote", "--tags", "--refs", HORSE_GIT_URL], stdout=subprocess.PIPE, text=True, timeout=10)
+                if proc.returncode == 0:
+                    for line in proc.stdout.splitlines():
+                        if "refs/tags/" in line:
+                            t = line.split("refs/tags/", 1)[1].strip()
+                            if t and not t.endswith("^{}") and "alpha" not in t.lower():
+                                available_tags.append(t)
+            except Exception:
+                pass
+
+        # Sort tags by semver descending
+        if available_tags:
+            try:
+                available_tags.sort(key=lambda s: [int(x) if x.isdigit() else 0 for x in s.lstrip('v').split('.')], reverse=True)
+                available_tags = available_tags[:5]
+            except Exception:
+                available_tags = available_tags[:5]
+        else:
+            available_tags = ["3.3.16", "3.3.15", "3.2.0", "3.1.5"]
+
         print("================================================================")
         print("  HashLoad Horse Version Manager & Upgrade")
         print("================================================================")
         print("  Select target Horse distribution to install:")
-        print("    [1] latest (main branch from HashLoad/horse)")
-        print("    [2] v3.1.5 (Official Release Tag)")
-        print("    [3] Custom git tag or branch")
+        for idx, t in enumerate(available_tags, 1):
+            lbl = "(Latest Official Release)" if idx == 1 else "(Official Release Tag)"
+            print(f"    [{idx}] {t:<10} {lbl}")
+        print("    [L] latest     (Main branch from HashLoad/horse)")
+        print("    [C] Custom     (Enter specific git tag or branch)")
         print("================================================================")
         try:
-            choice = input("Select option [1-3] or [C]ancel: ").strip()
+            choice = input(f"Select option [1-{len(available_tags)}, L, C] or [Q]uit: ").strip()
         except (KeyboardInterrupt, EOFError):
             print("\nOperation cancelled.")
             return 0
 
-        if not choice or choice.lower() in ("c", "cancel"):
+        if not choice or choice.lower() in ("q", "quit", "cancel"):
             print("Operation cancelled.")
             return 0
-        elif choice == "1":
+        elif choice.lower() in ("l", "latest", "main"):
             target_tag = "latest"
-        elif choice == "2":
-            target_tag = "v3.1.5"
-        elif choice == "3":
+        elif choice.lower() in ("c", "custom"):
             try:
-                target_tag = input("Enter git tag or branch (e.g. v3.1.5, main): ").strip()
+                target_tag = input("Enter git tag or branch (e.g. 3.3.16, main): ").strip()
             except (KeyboardInterrupt, EOFError):
                 print("\nOperation cancelled.")
                 return 0
@@ -364,8 +389,16 @@ def cmd_upgrade(sub_args):
                 print("Invalid version.")
                 return 1
         else:
-            print("Invalid selection.")
-            return 1
+            try:
+                num = int(choice)
+                if 1 <= num <= len(available_tags):
+                    target_tag = available_tags[num - 1]
+                else:
+                    print("Invalid selection.")
+                    return 1
+            except ValueError:
+                print("Invalid selection.")
+                return 1
 
     dest_dir = os.path.join(get_horse_versions_dir(), target_tag)
     print("================================================================")
