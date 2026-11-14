@@ -20,6 +20,55 @@ TEMPLATES_DIR = os.path.join(TOOL_DIR, "templates")
 HORSE_GIT_URL = "https://github.com/HashLoad/horse.git"
 HORSE_ZIP_URL = "https://github.com/HashLoad/horse/archive/refs/heads/main.zip"
 
+def get_horse_versions_dir():
+    d = os.path.expanduser("~/.blaisevue/versions/horse")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+def get_dir_size_bytes(path):
+    total = 0
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            fp = os.path.join(root, f)
+            try:
+                total += os.path.getsize(fp)
+            except OSError:
+                pass
+    return total
+
+def format_file_size(size_bytes):
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+def resolve_horse_path(server_dir):
+    """
+    Resolves the active Horse source directory:
+    1. Checks server-horse/horse.path (custom or user version)
+    2. Checks server-horse/lib/horse/src
+    3. Falls back to default
+    """
+    path_file = os.path.join(server_dir, "horse.path")
+    if os.path.exists(path_file):
+        try:
+            with open(path_file, "r", encoding="utf-8") as f:
+                val = f.read().strip()
+                if val:
+                    # Could be tag or directory
+                    if os.path.isdir(val) and os.path.exists(os.path.join(val, "src", "Horse.pas")):
+                        return os.path.join(val, "src")
+                    # Check in ~/.blaisevue/versions/horse/<val>
+                    user_ver = os.path.join(get_horse_versions_dir(), val)
+                    if os.path.isdir(user_ver) and os.path.exists(os.path.join(user_ver, "src", "Horse.pas")):
+                        return os.path.join(user_ver, "src")
+        except Exception:
+            pass
+
+    return os.path.join(server_dir, "lib", "horse", "src")
+
 def is_blaise_project_dir(d):
     if not os.path.isdir(d):
         return False
@@ -68,28 +117,29 @@ def require_blaise_project(cmd_context="bv horse"):
 def find_fpc():
     return shutil.which("fpc") or "fpc"
 
-def fetch_horse_upstream(target_horse_dir):
+def fetch_horse_upstream(target_horse_dir, tag=None):
     """
     Fetches official HashLoad/Horse source code directly from GitHub into target_horse_dir.
     Tries shallow git clone first; falls back to official repository ZIP archive.
     """
     horse_pas = os.path.join(target_horse_dir, "src", "Horse.pas")
-    if os.path.exists(horse_pas):
+    if os.path.exists(horse_pas) and not tag:
         return True
 
-    print("  [*] Fetching official HashLoad/Horse framework from GitHub...")
+    tag_str = f" ({tag})" if tag else ""
+    print(f"  [*] Fetching official HashLoad/Horse framework{tag_str} from GitHub...")
     os.makedirs(target_horse_dir, exist_ok=True)
 
     git_bin = shutil.which("git")
     if git_bin:
         try:
             print(f"      Cloning {HORSE_GIT_URL} (shallow clone)...")
-            res = subprocess.run(
-                [git_bin, "clone", "--depth", "1", HORSE_GIT_URL, target_horse_dir],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
+            cmd = [git_bin, "clone", "--depth", "1"]
+            if tag and tag not in ("latest", "main", "master"):
+                cmd += ["--branch", tag]
+            cmd += [HORSE_GIT_URL, target_horse_dir]
+
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if res.returncode == 0 and os.path.exists(horse_pas):
                 print("  [+] Official HashLoad/Horse repository cloned successfully.")
                 return True
@@ -97,9 +147,14 @@ def fetch_horse_upstream(target_horse_dir):
             print(f"      [!] git clone failed: {e}. Falling back to ZIP archive...")
 
     # Fallback: GitHub ZIP download
-    print(f"      Downloading Horse release archive from {HORSE_ZIP_URL}...")
+    if tag and tag not in ("latest", "main", "master"):
+        zip_url = f"https://github.com/HashLoad/horse/archive/refs/tags/{tag}.zip"
+    else:
+        zip_url = HORSE_ZIP_URL
+
+    print(f"      Downloading Horse release archive from {zip_url}...")
     try:
-        req = urllib.request.Request(HORSE_ZIP_URL, headers={"User-Agent": "BlaiseVue-Horse-Tool"})
+        req = urllib.request.Request(zip_url, headers={"User-Agent": "BlaiseVue-Horse-Tool"})
         with urllib.request.urlopen(req, timeout=30) as resp:
             zip_bytes = resp.read()
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
@@ -167,6 +222,262 @@ def cmd_init():
     print("")
     return 0
 
+def cmd_versions():
+    root = ""
+    try:
+        cur = os.path.abspath(os.getcwd())
+        while cur:
+            if is_blaise_project_dir(cur):
+                root = cur
+                break
+            parent = os.path.dirname(cur)
+            if not parent or parent == cur:
+                break
+            cur = parent
+    except Exception:
+        pass
+
+    server_dir = os.path.join(root, "server-horse") if root else ""
+    active_path = resolve_horse_path(server_dir) if server_dir else ""
+    versions_dir = get_horse_versions_dir()
+
+    print("================================================================")
+    print("  HashLoad Horse Framework Versions & Status")
+    print("================================================================")
+    if active_path and os.path.exists(active_path):
+        print(f"  [*] Active in Project:   {active_path}")
+    else:
+        print("  [*] Active in Project:   (no horse backend initialized)")
+
+    print("----------------------------------------------------------------")
+    print("  Available Framework Distributions:")
+
+    # Local project copy
+    if server_dir and os.path.isdir(os.path.join(server_dir, "lib", "horse", "src")):
+        sz = format_file_size(get_dir_size_bytes(os.path.join(server_dir, "lib", "horse")))
+        is_act = "ACTIVE | " if active_path == os.path.join(server_dir, "lib", "horse", "src") else ""
+        print(f"    [*] local-project {os.path.join(server_dir, 'lib', 'horse')} ({is_act}{sz})")
+
+    has_user = False
+    if os.path.exists(versions_dir):
+        for name in sorted(os.listdir(versions_dir)):
+            full_p = os.path.join(versions_dir, name)
+            if os.path.isdir(full_p):
+                has_user = True
+                sz = format_file_size(get_dir_size_bytes(full_p))
+                is_act = "ACTIVE | " if active_path == os.path.join(full_p, "src") else ""
+                print(f"    [{'*' if is_act else ' '}] {name:<12} {full_p} ({is_act}{sz})")
+
+    if not has_user:
+        print("    (no user versions installed - run 'bv horse upgrade' to install)")
+
+    print("================================================================")
+    print("To switch version in project: bv horse use <tag | local>")
+    print("To install/upgrade version:   bv horse upgrade [--tag=<v>]")
+    print("To remove user version:       bv horse remove-version [tag]")
+    print("================================================================")
+    return 0
+
+def cmd_use(sub_args):
+    root = require_blaise_project("bv horse use")
+    server_dir = os.path.join(root, "server-horse")
+    if not os.path.exists(server_dir):
+        print("[!] No Horse backend found in server-horse/. Run 'bv horse init' first.")
+        return 1
+
+    target_ver = ""
+    for a in sub_args:
+        if not a.startswith("-"):
+            target_ver = a
+            break
+
+    if not target_ver:
+        print("Usage: bv horse use <tag | local>")
+        print("Run 'bv horse versions' to see available distributions.")
+        return 1
+
+    path_file = os.path.join(server_dir, "horse.path")
+    if target_ver in ("local", "default", "bundled", "reset"):
+        if os.path.exists(path_file):
+            os.remove(path_file)
+        print("  [SUCCESS] Project configured to use local Horse in server-horse/lib/horse/")
+        return 0
+
+    user_ver = os.path.join(get_horse_versions_dir(), target_ver)
+    if os.path.isdir(user_ver) and os.path.exists(os.path.join(user_ver, "src", "Horse.pas")):
+        with open(path_file, "w", encoding="utf-8") as f:
+            f.write(target_ver + "\n")
+        print(f"  [SUCCESS] Project configured to use Horse version '{target_ver}':")
+        print(f"            {user_ver}")
+        return 0
+
+    if os.path.isdir(target_ver) and os.path.exists(os.path.join(target_ver, "src", "Horse.pas")):
+        with open(path_file, "w", encoding="utf-8") as f:
+            f.write(target_ver + "\n")
+        print(f"  [SUCCESS] Project configured to use Horse path:")
+        print(f"            {target_ver}")
+        return 0
+
+    print(f"  [ERROR] Horse version '{target_ver}' not found in {get_horse_versions_dir()}")
+    print("  Run 'bv horse upgrade' to install it first, or check 'bv horse versions'.")
+    return 1
+
+def cmd_upgrade(sub_args):
+    target_tag = ""
+    for a in sub_args:
+        if a.startswith("--tag="):
+            target_tag = a.split("=", 1)[1].strip()
+        elif a.startswith("--version="):
+            target_tag = a.split("=", 1)[1].strip()
+        elif not a.startswith("-"):
+            target_tag = a.strip()
+
+    if not target_tag:
+        print("================================================================")
+        print("  HashLoad Horse Version Manager & Upgrade")
+        print("================================================================")
+        print("  Select target Horse distribution to install:")
+        print("    [1] latest (main branch from HashLoad/horse)")
+        print("    [2] v3.1.5 (Official Release Tag)")
+        print("    [3] Custom git tag or branch")
+        print("================================================================")
+        try:
+            choice = input("Select option [1-3] or [C]ancel: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nOperation cancelled.")
+            return 0
+
+        if not choice or choice.lower() in ("c", "cancel"):
+            print("Operation cancelled.")
+            return 0
+        elif choice == "1":
+            target_tag = "latest"
+        elif choice == "2":
+            target_tag = "v3.1.5"
+        elif choice == "3":
+            try:
+                target_tag = input("Enter git tag or branch (e.g. v3.1.5, main): ").strip()
+            except (KeyboardInterrupt, EOFError):
+                print("\nOperation cancelled.")
+                return 0
+            if not target_tag:
+                print("Invalid version.")
+                return 1
+        else:
+            print("Invalid selection.")
+            return 1
+
+    dest_dir = os.path.join(get_horse_versions_dir(), target_tag)
+    print("================================================================")
+    print(f"  Target Distribution: Horse {target_tag}")
+    print(f"  Install Destination: {dest_dir}")
+    print("================================================================")
+
+    if os.path.exists(dest_dir):
+        try:
+            shutil.rmtree(dest_dir)
+        except Exception:
+            pass
+
+    ok = fetch_horse_upstream(dest_dir, tag=target_tag)
+    if ok:
+        print("")
+        print("======================================================================")
+        print(f"  [SUCCESS] HashLoad Horse ({target_tag}) installed successfully!")
+        print(f"  Location: {dest_dir}")
+        print("======================================================================")
+
+        # Check if inside project and offer activation
+        try:
+            cur = os.path.abspath(os.getcwd())
+            while cur:
+                if is_blaise_project_dir(cur) and os.path.exists(os.path.join(cur, "server-horse")):
+                    ans = input(f"Do you want to activate version '{target_tag}' in current project now? [y/N]: ").strip().lower()
+                    if ans in ("y", "yes", "s", "sim"):
+                        cmd_use([target_tag])
+                    break
+                parent = os.path.dirname(cur)
+                if not parent or parent == cur:
+                    break
+                cur = parent
+        except Exception:
+            pass
+        return 0
+    else:
+        print(f"  [ERROR] Failed to install Horse {target_tag}")
+        return 1
+
+def cmd_remove_version(sub_args):
+    versions_dir = get_horse_versions_dir()
+    force = any(f in sub_args for f in ("-y", "--yes", "-f", "--force"))
+    target_ver = ""
+    for a in sub_args:
+        if not a.startswith("-"):
+            target_ver = a.strip()
+            break
+
+    if not target_ver:
+        if not os.path.exists(versions_dir):
+            print(f"No user versions found in {versions_dir}")
+            return 0
+        names = sorted([d for d in os.listdir(versions_dir) if os.path.isdir(os.path.join(versions_dir, d))])
+        if not names:
+            print(f"No user versions found in {versions_dir}")
+            return 0
+
+        print("================================================================")
+        print(f"  Installed Horse Versions ({versions_dir})")
+        print("================================================================")
+        for i, name in enumerate(names, 1):
+            sz = format_file_size(get_dir_size_bytes(os.path.join(versions_dir, name)))
+            print(f"  [{i}] {name:<12} ({sz})")
+        print("================================================================")
+        try:
+            choice = input(f"Select a version to remove [1-{len(names)}] or [C]ancel: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nOperation cancelled.")
+            return 0
+
+        if not choice or choice.lower() in ("c", "cancel"):
+            print("Operation cancelled.")
+            return 0
+
+        try:
+            idx = int(choice)
+            if idx < 1 or idx > len(names):
+                print("Invalid selection.")
+                return 1
+            target_ver = names[idx - 1]
+        except ValueError:
+            print("Invalid input.")
+            return 1
+
+    item_path = os.path.join(versions_dir, target_ver)
+    if not os.path.exists(item_path):
+        print(f"[!] Horse version '{target_ver}' not found in {versions_dir}")
+        return 1
+
+    if not force:
+        try:
+            confirm = input(f"Are you sure you want to permanently delete Horse version '{target_ver}'? [y/N]: ").strip().lower()
+            if confirm not in ("y", "yes", "s", "sim"):
+                print("Operation cancelled.")
+                return 0
+        except (KeyboardInterrupt, EOFError):
+            print("\nOperation cancelled.")
+            return 0
+
+    sz_bytes = get_dir_size_bytes(item_path)
+    print(f"  [-] Removing {item_path} ...")
+    try:
+        shutil.rmtree(item_path)
+        print(f"  [SUCCESS] Horse version '{target_ver}' removed successfully! ({format_file_size(sz_bytes)} freed)")
+    except Exception as e:
+        print(f"  [ERROR] Failed to delete: {e}")
+        return 1
+
+    return 0
+
 def cmd_update():
     root = require_blaise_project("bv horse update")
     target_horse_dir = os.path.join(root, "server-horse", "lib", "horse")
@@ -210,10 +521,11 @@ def cmd_build(is_release=False):
         print("[!] No Horse project found in server-horse/. Initializing first...")
         cmd_init()
 
-    horse_src = os.path.join(server_dir, "lib", "horse", "src")
+    horse_src = resolve_horse_path(server_dir)
     if not os.path.exists(horse_src):
         print("  [*] Horse source not found. Fetching upstream from GitHub...")
         fetch_horse_upstream(os.path.join(server_dir, "lib", "horse"))
+        horse_src = resolve_horse_path(server_dir)
 
     bin_dir = os.path.join(server_dir, "bin")
     units_dir = os.path.join(server_dir, "lib", "units")
@@ -391,10 +703,14 @@ def cmd_remove(force=False):
     return 0
 
 def print_usage():
-    print("Usage: bv horse <init|update|run|build|status|kill|docker|deploy|remove> [options]")
+    print("Usage: bv horse <init|versions|upgrade|use|remove-version|update|run|build|status|kill|docker|deploy|remove> [options]")
     print("")
     print("Available Commands:")
     print("  init                       Scaffolds Horse server in server-horse/ and fetches upstream Horse")
+    print("  versions                   Lists active, local and user Horse framework versions")
+    print("  upgrade [--tag=<v>]        Downloads HashLoad/Horse release into ~/.blaisevue/versions/horse/")
+    print("  use <tag|local>            Switches active Horse version for current project")
+    print("  remove-version [tag]       Removes a cached Horse version")
     print("  update                     Pulls the latest upstream HashLoad/Horse updates from GitHub")
     print("  run [--release] [--port p] Compiles and starts native Horse server (Default Port 9000)")
     print("  build [--release]          Compiles server.pas with Free Pascal (FPC in Delphi mode)")
@@ -416,6 +732,14 @@ def main():
 
     if subcmd == "init":
         sys.exit(cmd_init())
+    elif subcmd in ("versions", "list", "ls"):
+        sys.exit(cmd_versions())
+    elif subcmd in ("upgrade", "install"):
+        sys.exit(cmd_upgrade(sub_args))
+    elif subcmd in ("use", "switch"):
+        sys.exit(cmd_use(sub_args))
+    elif subcmd in ("remove-version", "delete-version"):
+        sys.exit(cmd_remove_version(sub_args))
     elif subcmd == "update":
         sys.exit(cmd_update())
     elif subcmd == "build":
