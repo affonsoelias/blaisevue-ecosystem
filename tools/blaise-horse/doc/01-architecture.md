@@ -29,12 +29,13 @@
 
 ```
 project-root/
-├── app.cfg                     # Project metadata and configuration
-├── package.json                # Frontend dependencies
-├── src/                        # Vue 3 + TypeScript application
-│   ├── App.vue
-│   └── main.ts
-├── dist/                       # Output of `bv build` (or `npm run build`)
+├── app.cfg                     # Project metadata and compiler configuration
+├── package.json                # Frontend configuration and dependencies
+├── src/                        # Pascal Single File Components (.bv) and business logic
+│   ├── app.bv                  # Root reactive component
+│   ├── views/                  # Route views
+│   └── services/               # Pure Pascal domain services
+├── dist/                       # Output of `bv build` (index.html, js/main.js, css/)
 ├── server/                     # mORMot 2 backend (default if enabled)
 └── server-horse/               # Horse backend
     ├── .env                    # Port and runtime configuration
@@ -54,8 +55,8 @@ project-root/
 
 The Horse backend starts as a standalone native process. When serving HTTP requests, it follows this resolution pipeline:
 
-1. **CORS Headers**: Appended on all incoming requests to permit Vite dev-server hot reload requests (`http://localhost:5173`).
+1. **CORS Headers**: Appended on all incoming requests to permit Vite dev-server hot reload requests (`http://localhost:8080`).
 2. **Options Preflight**: Returns HTTP 204 immediately for preflight queries.
 3. **API Routing**: Routes matching `/api/*` bypass static file handlers and execute corresponding Horse callbacks.
 4. **Static File Resolution**: If an exact file exists inside `dist/`, it is streamed with correct MIME headers (`Res.SendFile`).
-5. **SPA Fallback**: If the path does not match a file or an API endpoint, `dist/index.html` is returned, letting Vue Router handle frontend navigation.
+5. **SPA Fallback**: If the path does not match a file or an API endpoint, `dist/index.html` is returned, letting BlaiseVue Router handle frontend navigation.

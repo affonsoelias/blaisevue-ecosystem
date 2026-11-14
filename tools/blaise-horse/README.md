@@ -67,11 +67,18 @@ Query the running Horse server:
 bv horse status
 ```
 
-### 4. Update upstream Horse
-Fetch the latest features and patches from HashLoad:
+### 4. Multi-version management & upstream upgrade
+List versions, choose new releases from GitHub, switch versions, or remove cached versions:
 
 ```bash
-bv horse update
+bv horse versions                      # Lists active, local and user Horse framework versions
+bv horse upgrade                       # Interactive release picker (queries HashLoad GitHub in real time)
+bv horse upgrade --tag=3.3.16          # Downloads specific release tag into ~/.blaisevue/versions/horse/
+bv horse use 3.3.16                    # Switches active project to use cached Horse version
+bv horse use local                     # Reverts to local project copy in server-horse/lib/horse/
+bv horse remove-version                # Interactive deletion wizard to reclaim disk space
+bv horse remove-version 3.3.16 -y      # Deletes specific cached version without prompt
+bv horse update                        # Pulls latest updates into local server-horse/lib/horse/
 ```
 
 ### 5. Build standalone binaries
@@ -103,7 +110,11 @@ bv horse remove -y
 | Command | Description |
 | :--- | :--- |
 | `bv horse init` | Scaffolds `server-horse/` and fetches upstream HashLoad Horse from GitHub. |
-| `bv horse update` | Pulls the latest HashLoad Horse framework updates from GitHub. |
+| `bv horse versions` | Lists active, local and user Horse framework versions with disk usage. |
+| `bv horse upgrade [--tag=<v>]` | Interactively chooses and downloads a Horse release to `~/.blaisevue/versions/`. |
+| `bv horse use <tag\|local>` | Switches the active Horse version configured for the current project. |
+| `bv horse remove-version [tag]` | Interactively selects and deletes a cached Horse version to free disk space. |
+| `bv horse update` | Pulls the latest HashLoad Horse framework updates from GitHub into local server. |
 | `bv horse run [--release] [--port p]` | Compiles and starts the Horse server (default: port 9000). |
 | `bv horse build [--release]` | Compiles `server-horse/server.pas` with Free Pascal (`fpc`). |
 | `bv horse status [--port p]` | Checks the health endpoint of the running server (`/api/health`). |

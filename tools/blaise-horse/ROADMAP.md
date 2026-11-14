@@ -6,7 +6,7 @@ This document outlines the development roadmap and planned capabilities for the 
 
 ## 🎯 Vision
 
-The goal of `blaise-horse` is to provide a clean, lightweight, Express-like microframework backend for Pascal developers who value simplicity, zero external runtime dependencies, rapid prototyping, and effortless containerization alongside BlaiseVue's modern Vue 3 frontend.
+The goal of `blaise-horse` is to provide a clean, lightweight, Express-like microframework backend for Pascal developers who value simplicity, zero external runtime dependencies, rapid prototyping, and effortless containerization alongside BlaiseVue's modern reactive Pascal frontend.
 
 While **mORMot 2** remains BlaiseVue's enterprise-grade, high-throughput default backend, `blaise-horse` offers an accessible and agile alternative for developers seeking minimalist architectures, microservices, or quick CRUD endpoints.
 
@@ -18,8 +18,9 @@ While **mORMot 2** remains BlaiseVue's enterprise-grade, high-throughput default
 - [x] Isolated directory structure in `server-horse/` (zero clashing with `server/`).
 - [x] Direct upstream fetching of official **HashLoad Horse** microframework from GitHub into `server-horse/lib/horse/`.
 - [x] Upstream synchronization command: `bv horse update`.
+- [x] Multi-version management: `bv horse versions`, `bv horse upgrade`, `bv horse use`, and `bv horse remove-version`.
 - [x] Official Express-like routing syntax (`THorse.Get`, `THorse.Post`, `THorse.Use`, `THorse.Listen`) in Free Pascal Delphi mode.
-- [x] Pre-configured CORS middleware for local Vite/Vue development (`http://localhost:5173`).
+- [x] Pre-configured CORS middleware for local BlaiseVue development (`http://localhost:8080`).
 - [x] Built-in static file server with Single Page Application (SPA) HTML5 history mode fallback (`dist/`).
 - [x] Native CLI commands integrated into BlaiseVue (`bv horse init`, `update`, `build`, `run`, `status`, `kill`, `docker`, `deploy`, `remove`).
 - [x] Safe uninstaller (`bv horse remove [-y]`) with zero impact on other project directories.
