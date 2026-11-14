@@ -12,6 +12,19 @@
     }
   },
   "tools": {
+    "blaise-horse": {
+      "name": "blaise-horse",
+      "type": "co-official",
+      "category": "Backend Framework",
+      "description": "Co-official Horse microframework backend integration for BlaiseVue with isolated server-horse/ scaffolding",
+      "latest": "1.0.0",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "download_url": "https://github.com/affonsoelias/blaisevue-ecosystem/releases/download/{tag}/{package}-{version}.zip"
+        }
+      ]
+    },
     "test-tool": {
       "name": "test-tool",
       "type": "co-official",

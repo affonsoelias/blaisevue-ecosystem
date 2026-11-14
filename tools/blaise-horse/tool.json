@@ -1,0 +1,18 @@
+{
+  "name": "blaise-horse",
+  "version": "1.0.0",
+  "category": "Backend Framework",
+  "description": "Co-official Horse microframework backend integration for BlaiseVue with isolated server-horse/ scaffolding",
+  "author": "BlaiseVue Core Team",
+  "license": "MIT",
+  "homepage": "https://github.com/affonsoelias/blaisevue-ecosystem/tree/main/tools/blaise-horse",
+  "type": "co-official",
+  "bin": "run.py",
+  "scripts": {
+    "status": "status.py",
+    "install": "install.py",
+    "update": "update.py",
+    "remove": "remove.py",
+    "pack": "pack.py"
+  }
+}
