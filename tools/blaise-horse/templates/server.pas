@@ -22,24 +22,67 @@ type
     procedure HandleRequest(var ARequest: TFPHTTPConnectionRequest; var AResponse: TFPHTTPConnectionResponse); override;
   public
     constructor Create(AOwner: TComponent); override;
+    property DistPath: string read FDistPath write FDistPath;
   end;
 
 constructor THorseServer.Create(AOwner: TComponent);
 var
-  BaseDir: string;
+  BaseDir, Candidate: string;
 begin
   inherited Create(AOwner);
   Port := DEFAULT_PORT;
   BaseDir := ExtractFileDir(ParamStr(0));
-  // Look for dist/ in current working directory or relative to executable
-  if DirectoryExists(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
-    FDistPath := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'dist')
-  else if DirectoryExists(GetCurrentDir + DirectorySeparator + 'dist') then
-    FDistPath := ExpandFileName(GetCurrentDir + DirectorySeparator + 'dist')
-  else if DirectoryExists(BaseDir + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
-    FDistPath := ExpandFileName(BaseDir + DirectorySeparator + '..' + DirectorySeparator + 'dist')
-  else
-    FDistPath := ExpandFileName(BaseDir + DirectorySeparator + 'dist');
+
+  FDistPath := '';
+
+  // 1. Two levels up from bin/ (server-horse/bin/server.exe -> project-root/dist)
+  Candidate := ExpandFileName(BaseDir + DirectorySeparator + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist');
+  if DirectoryExists(Candidate) and FileExists(Candidate + DirectorySeparator + 'index.html') then
+    FDistPath := Candidate;
+
+  // 2. One level up from server-horse/ (server-horse/server.exe -> project-root/dist)
+  if (FDistPath = '') then
+  begin
+    Candidate := ExpandFileName(BaseDir + DirectorySeparator + '..' + DirectorySeparator + 'dist');
+    if DirectoryExists(Candidate) and FileExists(Candidate + DirectorySeparator + 'index.html') then
+      FDistPath := Candidate;
+  end;
+
+  // 3. Current working directory one level up (cwd=server-horse/ -> ../dist)
+  if (FDistPath = '') then
+  begin
+    Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'dist');
+    if DirectoryExists(Candidate) and FileExists(Candidate + DirectorySeparator + 'index.html') then
+      FDistPath := Candidate;
+  end;
+
+  // 4. Same directory (deploy/horse/server.exe with deploy/horse/dist)
+  if (FDistPath = '') then
+  begin
+    Candidate := ExpandFileName(BaseDir + DirectorySeparator + 'dist');
+    if DirectoryExists(Candidate) and FileExists(Candidate + DirectorySeparator + 'index.html') then
+      FDistPath := Candidate;
+  end;
+
+  if (FDistPath = '') then
+  begin
+    Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + 'dist');
+    if DirectoryExists(Candidate) and FileExists(Candidate + DirectorySeparator + 'index.html') then
+      FDistPath := Candidate;
+  end;
+
+  // Fallback checks even before frontend is built
+  if (FDistPath = '') then
+  begin
+    if DirectoryExists(BaseDir + DirectorySeparator + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
+      FDistPath := ExpandFileName(BaseDir + DirectorySeparator + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist')
+    else if DirectoryExists(BaseDir + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
+      FDistPath := ExpandFileName(BaseDir + DirectorySeparator + '..' + DirectorySeparator + 'dist')
+    else if DirectoryExists(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
+      FDistPath := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'dist')
+    else
+      FDistPath := ExpandFileName(BaseDir + DirectorySeparator + 'dist');
+  end;
 end;
 
 function THorseServer.GetMimeType(const FileName: string): string;
@@ -97,7 +140,11 @@ begin
   if (ReqPath = '') or (ReqPath = '/') then
     ReqPath := '/index.html';
 
-  TargetFile := FDistPath + StringReplace(ReqPath, '/', DirectorySeparator, [rfReplaceAll]);
+  if (ReqPath <> '') and (ReqPath[1] = '/') then
+    TargetFile := FDistPath + StringReplace(ReqPath, '/', DirectorySeparator, [rfReplaceAll])
+  else
+    TargetFile := FDistPath + DirectorySeparator + StringReplace(ReqPath, '/', DirectorySeparator, [rfReplaceAll]);
+
   if FileExists(TargetFile) then
   begin
     AResponse.ContentType := GetMimeType(TargetFile);
@@ -230,21 +277,22 @@ begin
   if ParamCount >= 1 then
     PortNum := StrToIntDef(ParamStr(1), DEFAULT_PORT);
 
-  WriteLn('================================================================');
-  WriteLn('  BlaiseVue Horse Native Backend Server v1.0.0');
-  WriteLn('================================================================');
-  WriteLn('  Engine:      Horse / fpWeb (Free Pascal Compiler)');
-  WriteLn('  Port:        ', PortNum);
-  WriteLn('  Local App:   http://localhost:', PortNum);
-  WriteLn('  API Health:  http://localhost:', PortNum, '/api/health');
-  WriteLn('  Static SPA:  Serving ../dist/');
-  WriteLn('================================================================');
-  WriteLn('Press Ctrl+C to terminate.');
-  WriteLn('');
-
   App := THorseServer.Create(nil);
   try
     App.Port := PortNum;
+
+    WriteLn('================================================================');
+    WriteLn('  BlaiseVue Horse Native Backend Server v1.0.0');
+    WriteLn('================================================================');
+    WriteLn('  Engine:      Horse / fpWeb (Free Pascal Compiler)');
+    WriteLn('  Port:        ', PortNum);
+    WriteLn('  Local App:   http://localhost:', PortNum);
+    WriteLn('  API Health:  http://localhost:', PortNum, '/api/health');
+    WriteLn('  Static SPA:  Serving ', App.DistPath);
+    WriteLn('================================================================');
+    WriteLn('Press Ctrl+C to terminate.');
+    WriteLn('');
+
     App.Active := True;
   finally
     App.Free;
