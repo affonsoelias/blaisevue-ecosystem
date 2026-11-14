@@ -185,6 +185,33 @@ begin
       AResponse.Content := LoadFileContent(FDistPath + DirectorySeparator + 'index.html');
       AResponse.SendContent;
       Exit;
+    end
+    else if (ReqPath = '') or (ReqPath = '/') then
+    begin
+      AResponse.ContentType := 'text/html; charset=utf-8';
+      AResponse.Code := 200;
+      AResponse.Content :=
+        '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+        '<title>BlaiseVue Horse Server</title>' +
+        '<style>body{font-family:system-ui,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}' +
+        '.card{background:#1e293b;padding:2.5rem 3rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.4);border:1px solid #334155;text-align:center;max-width:480px}' +
+        'h1{color:#38bdf8;margin:0 0 0.5rem}p{color:#94a3b8;font-size:0.95rem;line-height:1.5}' +
+        '.badge{background:#0369a1;color:#fff;padding:4px 12px;border-radius:99px;font-size:0.8rem;display:inline-block;margin-bottom:1rem}' +
+        '.box{background:#0f172a;padding:1rem;border-radius:8px;text-align:left;font-family:monospace;font-size:0.9rem;margin-top:1.5rem}' +
+        'a{color:#38bdf8;text-decoration:none}a:hover{text-decoration:underline}' +
+        '</style></head><body><div class="card">' +
+        '<div class="badge">BlaiseVue Horse Backend</div>' +
+        '<h1>Server Active</h1>' +
+        '<p>The native Pascal backend microservice is running on port <strong>' + IntToStr(Port) + '</strong>.</p>' +
+        '<div class="box">' +
+        '<div>- Health: <a href="/api/health">/api/health</a></div>' +
+        '<div>- Ping: <a href="/api/ping">/api/ping</a></div>' +
+        '<div>- Items: <a href="/api/items">/api/items</a></div>' +
+        '</div>' +
+        '<p style="margin-top:1.5rem;font-size:0.85rem">To serve your frontend SPA, run: <code>bv build</code></p>' +
+        '</div></body></html>';
+      AResponse.SendContent;
+      Exit;
     end;
   end;
 
@@ -208,6 +235,7 @@ begin
   WriteLn('================================================================');
   WriteLn('  Engine:      Horse / fpWeb (Free Pascal Compiler)');
   WriteLn('  Port:        ', PortNum);
+  WriteLn('  Local App:   http://localhost:', PortNum);
   WriteLn('  API Health:  http://localhost:', PortNum, '/api/health');
   WriteLn('  Static SPA:  Serving ../dist/');
   WriteLn('================================================================');
