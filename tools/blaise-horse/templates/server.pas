@@ -56,6 +56,58 @@ begin
   Result := ExpandFileName(BaseDir + DirectorySeparator + 'dist');
 end;
 
+function DetectMimeType(const AFilePath: string): string;
+var
+  Ext: string;
+begin
+  Ext := LowerCase(ExtractFileExt(AFilePath));
+  if (Ext = '.html') or (Ext = '.htm') then
+    Result := 'text/html; charset=utf-8'
+  else if (Ext = '.js') or (Ext = '.mjs') then
+    Result := 'application/javascript; charset=utf-8'
+  else if Ext = '.css' then
+    Result := 'text/css; charset=utf-8'
+  else if (Ext = '.json') or (Ext = '.map') then
+    Result := 'application/json; charset=utf-8'
+  else if Ext = '.svg' then
+    Result := 'image/svg+xml'
+  else if Ext = '.wasm' then
+    Result := 'application/wasm'
+  else if Ext = '.png' then
+    Result := 'image/png'
+  else if (Ext = '.jpg') or (Ext = '.jpeg') then
+    Result := 'image/jpeg'
+  else if Ext = '.gif' then
+    Result := 'image/gif'
+  else if Ext = '.webp' then
+    Result := 'image/webp'
+  else if Ext = '.ico' then
+    Result := 'image/x-icon'
+  else if Ext = '.woff' then
+    Result := 'font/woff'
+  else if Ext = '.woff2' then
+    Result := 'font/woff2'
+  else if Ext = '.ttf' then
+    Result := 'font/ttf'
+  else if Ext = '.eot' then
+    Result := 'application/vnd.ms-fontobject'
+  else if Ext = '.txt' then
+    Result := 'text/plain; charset=utf-8'
+  else
+    Result := 'application/octet-stream';
+end;
+
+function IsStaticAssetExt(const Ext: string): Boolean;
+begin
+  Result :=
+    (Ext = '.js') or (Ext = '.mjs') or (Ext = '.css') or
+    (Ext = '.png') or (Ext = '.jpg') or (Ext = '.jpeg') or
+    (Ext = '.gif') or (Ext = '.webp') or (Ext = '.svg') or
+    (Ext = '.ico') or (Ext = '.woff') or (Ext = '.woff2') or
+    (Ext = '.ttf') or (Ext = '.eot') or (Ext = '.map') or
+    (Ext = '.json') or (Ext = '.wasm');
+end;
+
 procedure MiddlewareCORS(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
 begin
   Res.RawWebResponse.SetCustomHeader('Access-Control-Allow-Origin', '*');
@@ -71,12 +123,19 @@ end;
 
 procedure MiddlewareStaticAndSPA(Req: THorseRequest; Res: THorseResponse; Next: TNextProc);
 var
-  ReqPath, TargetFile: string;
+  ReqPath, TargetFile, Ext: string;
+  QPos: Integer;
 begin
   ReqPath := Req.RawWebRequest.PathInfo;
+  QPos := Pos('?', ReqPath);
+  if QPos > 0 then
+    ReqPath := Copy(ReqPath, 1, QPos - 1);
+  QPos := Pos('#', ReqPath);
+  if QPos > 0 then
+    ReqPath := Copy(ReqPath, 1, QPos - 1);
 
   // Let API requests pass directly to registered endpoints
-  if Pos('/api/', LowerCase(ReqPath)) = 1 then
+  if (Pos('/api/', LowerCase(ReqPath)) = 1) or (LowerCase(ReqPath) = '/api') then
   begin
     Next();
     Exit;
@@ -90,16 +149,30 @@ begin
   else
     TargetFile := FDistPath + DirectorySeparator + StringReplace(ReqPath, '/', DirectorySeparator, [rfReplaceAll]);
 
-  if FileExists(TargetFile) then
+  if FileExists(TargetFile) and (not DirectoryExists(TargetFile)) then
   begin
-    Res.SendFile(TargetFile);
+    Res.SendFile(TargetFile, DetectMimeType(TargetFile));
+    Exit;
+  end;
+
+  // Missing static asset guard (avoid serving index.html for missing .js/.css/etc.)
+  Ext := LowerCase(ExtractFileExt(TargetFile));
+  if IsStaticAssetExt(Ext) then
+  begin
+    if (Ext = '.js') and (Pos('main.', LowerCase(ExtractFileName(TargetFile))) = 1) and
+       FileExists(FDistPath + DirectorySeparator + 'js' + DirectorySeparator + 'main.js') then
+    begin
+      Res.SendFile(FDistPath + DirectorySeparator + 'js' + DirectorySeparator + 'main.js', 'application/javascript; charset=utf-8');
+      Exit;
+    end;
+    Res.Status(THTTPStatus.NotFound).ContentType('text/plain; charset=utf-8').Send('404 File Not Found: ' + ReqPath);
     Exit;
   end;
 
   // SPA Fallback: serve index.html for non-API routes
   if FileExists(FDistPath + DirectorySeparator + 'index.html') then
   begin
-    Res.SendFile(FDistPath + DirectorySeparator + 'index.html');
+    Res.SendFile(FDistPath + DirectorySeparator + 'index.html', 'text/html; charset=utf-8');
     Exit;
   end;
 

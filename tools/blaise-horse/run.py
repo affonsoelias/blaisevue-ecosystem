@@ -117,6 +117,18 @@ def require_blaise_project(cmd_context="bv horse"):
 def find_fpc():
     return shutil.which("fpc") or "fpc"
 
+def find_bv_cli():
+    exe_name = "bv.exe" if sys.platform.startswith("win") else "bv"
+    env_sdk = os.environ.get("BLAISEVUE_SDK_PATH", "").strip()
+    if env_sdk:
+        cand = os.path.join(env_sdk, "bin", exe_name)
+        if os.path.exists(cand):
+            return cand
+    found = shutil.which("bv")
+    if found:
+        return found
+    return "bv"
+
 def fetch_horse_upstream(target_horse_dir, tag=None):
     """
     Fetches official HashLoad/Horse source code directly from GitHub into target_horse_dir.
@@ -597,6 +609,7 @@ def cmd_build(is_release=False):
 def cmd_run(args_list):
     root = require_blaise_project("bv horse run")
     server_dir = os.path.join(root, "server-horse")
+    server_pas = os.path.join(server_dir, "server.pas")
     bin_dir = os.path.join(server_dir, "bin")
     exe_name = "server.exe" if sys.platform.startswith("win") else "server"
     target_exe = os.path.join(bin_dir, exe_name)
@@ -611,8 +624,35 @@ def cmd_run(args_list):
         elif a.startswith("--port="):
             port = a.split("=", 1)[1]
 
-    # Recompile if needed
-    if not os.path.exists(target_exe):
+    # Auto-init Horse backend if missing
+    if not os.path.exists(server_pas):
+        print("[!] No Horse project found in server-horse/. Initializing first...")
+        ret = cmd_init()
+        if ret != 0:
+            return ret
+
+    # Ensure frontend dist/ bundle exists before starting the Horse server
+    dist_index = os.path.join(root, "dist", "index.html")
+    dist_main = os.path.join(root, "dist", "js", "main.js")
+    src_dir = os.path.join(root, "src")
+    if is_release and os.path.isdir(src_dir):
+        print("  [+] Compiling reactive frontend in RELEASE mode (bv build --release)...")
+        ret = subprocess.run([find_bv_cli(), "build", "--release"], cwd=root).returncode
+        if ret != 0:
+            return ret
+    elif (not os.path.exists(dist_index) or not os.path.exists(dist_main)) and os.path.isdir(src_dir):
+        print("  [INFO] Frontend dist/ bundle not found. Building frontend before starting Horse server...")
+        ret = subprocess.run([find_bv_cli(), "build"], cwd=root).returncode
+        if ret != 0:
+            return ret
+
+    # Compile or recompile if missing, release, or server.pas is newer than binary
+    need_build = (
+        is_release
+        or not os.path.exists(target_exe)
+        or (os.path.exists(server_pas) and os.path.getmtime(server_pas) > os.path.getmtime(target_exe))
+    )
+    if need_build:
         ret = cmd_build(is_release=is_release)
         if ret != 0:
             return ret
